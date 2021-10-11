@@ -2868,6 +2868,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 				 &revs->grep_filter);
 	if (!is_encoding_utf8(get_log_output_encoding()))
 		revs->grep_filter.ignore_locale = 1;
+	else
+		revs->grep_filter.utf8_all_the_things = 1;
 	compile_grep_patterns(&revs->grep_filter);
 
 	if (revs->reverse && revs->reflog_info)
