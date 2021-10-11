@@ -35,6 +35,12 @@ struct tmp_objdir *tmp_objdir_create(const char *prefix);
 const char **tmp_objdir_env(const struct tmp_objdir *);
 
 /*
+ * Discard the files in the specified temporary object directory but leave
+ * the directory itself around.
+ */
+void tmp_objdir_discard_contents(struct tmp_objdir *);
+
+/*
  * Finalize a temporary object directory by migrating its objects into the main
  * object database, removing the temporary directory, and freeing any
  * associated resources.

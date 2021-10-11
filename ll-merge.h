@@ -96,6 +96,15 @@ int ll_merge(mmbuffer_t *result_buf,
 	     struct index_state *istate,
 	     const struct ll_merge_options *opts);
 
+int ll_merge_with_warnings(mmbuffer_t *result_buf,
+			   struct strbuf *warnings,
+			   const char *path,
+			   mmfile_t *ancestor, const char *ancestor_label,
+			   mmfile_t *ours, const char *our_label,
+			   mmfile_t *theirs, const char *their_label,
+			   struct index_state *istate,
+			   const struct ll_merge_options *opts);
+
 int ll_merge_marker_size(struct index_state *istate, const char *path);
 void reset_merge_attributes(void);
 

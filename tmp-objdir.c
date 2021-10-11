@@ -180,6 +180,13 @@ struct tmp_objdir *tmp_objdir_create(const char *prefix)
 	return t;
 }
 
+void tmp_objdir_discard_contents(struct tmp_objdir *t)
+{
+	remove_dir_recursively(&t->path, REMOVE_DIR_KEEP_TOPLEVEL);
+	if (setup_tmp_objdir(t->path.buf))
+		die_errno(_("could not recreate objdir %s"), t->path.buf);
+}
+
 /*
  * Make sure we copy packfiles and their associated metafiles in the correct
  * order. All of these ends_with checks are slightly expensive to do in

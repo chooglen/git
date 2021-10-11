@@ -46,6 +46,7 @@ struct merge_options {
 	/* miscellaneous control options */
 	const char *subtree_shift;
 	unsigned renormalize : 1;
+	unsigned record_conflict_msgs_in_tree : 1;
 
 	/* internal fields used by the implementation */
 	struct merge_options_internal *priv;
