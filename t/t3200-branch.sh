@@ -731,6 +731,27 @@ test_expect_success SYMLINKS 'git branch -m u v should fail when the reflog for 
 	test_must_fail git branch -m u v
 '
 
+test_expect_success SYMLINKS 'git branch -m with symlinked .git/refs' '
+	test_when_finished "rm -rf subdir" &&
+	git init subdir &&
+
+	(
+		cd subdir &&
+		for d in refs objects packed-refs
+		do
+			rm -rf .git/$d &&
+			ln -s ../../.git/$d .git/$d
+		done
+	) &&
+	git --git-dir subdir/.git/ branch rename-src &&
+	git rev-parse rename-src >expect &&
+	# Tests a BUG() assertion in files_read_raw_ref()
+	git --git-dir subdir/.git/ branch -m rename-src rename-dest &&
+	git rev-parse rename-dest >actual &&
+	test_cmp expect actual &&
+	git branch -D rename-dest
+'
+
 test_expect_success 'test tracking setup via --track' '
 	git config remote.local.url . &&
 	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
