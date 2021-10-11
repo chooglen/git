@@ -965,6 +965,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 	int split_index = -1;
 	int force_write = 0;
 	int fsmonitor = -1;
+	int use_default_full_index = 0;
 	struct lock_file lock_file = LOCK_INIT;
 	struct parse_opt_ctx_t ctx;
 	strbuf_getline_fn getline_fn;
@@ -1070,6 +1071,8 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 		{OPTION_SET_INT, 0, "no-fsmonitor-valid", &mark_fsmonitor_only, NULL,
 			N_("clear fsmonitor valid bit"),
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, UNMARK_FLAG},
+		OPT_SET_INT(0, "force-full-index", &use_default_full_index,
+			N_("run with full index explicitly required"), 1),
 		OPT_END()
 	};
 
@@ -1082,6 +1085,14 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 	newfd = hold_locked_index(&lock_file, 0);
 	if (newfd < 0)
 		lock_error = errno;
+
+	/*
+	 * If --force-full-index is set, the command should skip manually
+	 * setting `command_requires_full_index`.
+	 */
+	prepare_repo_settings(r);
+	if (!use_default_full_index)
+		r->settings.command_requires_full_index = 1;
 
 	entries = read_cache();
 	if (entries < 0)

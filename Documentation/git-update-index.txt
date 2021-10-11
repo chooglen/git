@@ -24,6 +24,7 @@ SYNOPSIS
 	     [--[no-]fsmonitor]
 	     [--really-refresh] [--unresolve] [--again | -g]
 	     [--info-only] [--index-info]
+	     [--force-full-index]
 	     [-z] [--stdin] [--index-version <n>]
 	     [--verbose]
 	     [--] [<file>...]
@@ -169,6 +170,10 @@ size by 30%-50% on large repositories, which results in faster load
 time. Version 4 is relatively young (first released in 1.8.0 in
 October 2012). Other Git implementations such as JGit and libgit2
 may not support it yet.
+
+--force-full-index::
+	Force the command to operate on a full index, expanding a sparse
+	index if necessary.
 
 -z::
 	Only meaningful with `--stdin` or `--index-info`; paths are
