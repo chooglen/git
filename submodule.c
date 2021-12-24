@@ -799,6 +799,15 @@ static const char *default_name_or_path(const char *path_or_name)
 	return path_or_name;
 }
 
+/*
+ * Holds relevant information for a changed submodule. Used as the .util
+ * member of the changed submodule string_list_item.
+ */
+struct changed_submodule_data {
+	/* The submodule commits that have changed in the rev walk. */
+	struct oid_array *new_commits;
+};
+
 static void collect_changed_submodules_cb(struct diff_queue_struct *q,
 					  struct diff_options *options,
 					  void *data)
@@ -813,6 +822,7 @@ static void collect_changed_submodules_cb(struct diff_queue_struct *q,
 		const struct submodule *submodule;
 		const char *name;
 		struct string_list_item *item;
+		struct changed_submodule_data *cs_data;
 
 		if (!S_ISGITLINK(p->two->mode))
 			continue;
@@ -840,10 +850,15 @@ static void collect_changed_submodules_cb(struct diff_queue_struct *q,
 			continue;
 
 		item = string_list_insert(changed, name);
-		if (!item->util)
+		if (item->util)
+			cs_data = item->util;
+		else {
+			cs_data = xcalloc(1, sizeof(struct changed_submodule_data));
 			/* NEEDSWORK: should we have oid_array_init()? */
-			item->util = xcalloc(1, sizeof(struct oid_array));
-		oid_array_append(item->util, &p->two->oid);
+			cs_data->new_commits = xcalloc(1, sizeof(struct oid_array));
+			item->util = cs_data;
+		}
+		oid_array_append(cs_data->new_commits, &p->two->oid);
 	}
 }
 
@@ -893,8 +908,10 @@ static void collect_changed_submodules(struct repository *r,
 static void free_submodules_oids(struct string_list *submodules)
 {
 	struct string_list_item *item;
-	for_each_string_list_item(item, submodules)
-		oid_array_clear((struct oid_array *) item->util);
+	for_each_string_list_item(item, submodules) {
+		struct changed_submodule_data *cs_data = item->util;
+		oid_array_clear(cs_data->new_commits);
+	}
 	string_list_clear(submodules, 1);
 }
 
@@ -1060,7 +1077,7 @@ int find_unpushed_submodules(struct repository *r,
 	collect_changed_submodules(r, &submodules, &argv);
 
 	for_each_string_list_item(name, &submodules) {
-		struct oid_array *commits = name->util;
+		struct changed_submodule_data *cs_data = name->util;
 		const struct submodule *submodule;
 		const char *path = NULL;
 
@@ -1073,7 +1090,7 @@ int find_unpushed_submodules(struct repository *r,
 		if (!path)
 			continue;
 
-		if (submodule_needs_pushing(r, path, commits))
+		if (submodule_needs_pushing(r, path, cs_data->new_commits))
 			string_list_insert(needs_pushing, path);
 	}
 
@@ -1247,7 +1264,7 @@ static void calculate_changed_submodule_paths(struct repository *r,
 	collect_changed_submodules(r, changed_submodule_names, &argv);
 
 	for_each_string_list_item(name, changed_submodule_names) {
-		struct oid_array *commits = name->util;
+		struct changed_submodule_data *cs_data = name->util;
 		const struct submodule *submodule;
 		const char *path = NULL;
 
@@ -1260,8 +1277,8 @@ static void calculate_changed_submodule_paths(struct repository *r,
 		if (!path)
 			continue;
 
-		if (submodule_has_commits(r, path, commits)) {
-			oid_array_clear(commits);
+		if (submodule_has_commits(r, path, cs_data->new_commits)) {
+			oid_array_clear(cs_data->new_commits);
 			*name->string = '\0';
 		}
 	}
@@ -1580,7 +1597,7 @@ static int fetch_finish(int retvalue, struct strbuf *err,
 	struct fetch_task *task = task_cb;
 
 	struct string_list_item *it;
-	struct oid_array *commits;
+	struct changed_submodule_data *cs_data;
 
 	if (!task || !task->sub)
 		BUG("callback cookie bogus");
@@ -1608,14 +1625,14 @@ static int fetch_finish(int retvalue, struct strbuf *err,
 		/* Could be an unchanged submodule, not contained in the list */
 		goto out;
 
-	commits = it->util;
-	oid_array_filter(commits,
+	cs_data = it->util;
+	oid_array_filter(cs_data->new_commits,
 			 commit_missing_in_sub,
 			 task->repo);
 
 	/* Are there commits we want, but do not exist? */
-	if (commits->nr) {
-		task->commits = commits;
+	if (cs_data->new_commits->nr) {
+		task->commits = cs_data->new_commits;
 		ALLOC_GROW(spf->oid_fetch_tasks,
 			   spf->oid_fetch_tasks_nr + 1,
 			   spf->oid_fetch_tasks_alloc);
