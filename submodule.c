@@ -804,6 +804,11 @@ static const char *default_name_or_path(const char *path_or_name)
  * member of the changed submodule string_list_item.
  */
 struct changed_submodule_data {
+	/*
+	 * The first superproject commit in the rev walk that points to the
+	 * submodule.
+	 */
+	const struct object_id *super_oid;
 	/* The submodule commits that have changed in the rev walk. */
 	struct oid_array *new_commits;
 };
@@ -856,6 +861,7 @@ static void collect_changed_submodules_cb(struct diff_queue_struct *q,
 			cs_data = xcalloc(1, sizeof(struct changed_submodule_data));
 			/* NEEDSWORK: should we have oid_array_init()? */
 			cs_data->new_commits = xcalloc(1, sizeof(struct oid_array));
+			cs_data->super_oid = commit_oid;
 			item->util = cs_data;
 		}
 		oid_array_append(cs_data->new_commits, &p->two->oid);
@@ -932,6 +938,7 @@ struct has_commit_data {
 	struct repository *repo;
 	int result;
 	const char *path;
+	const struct object_id *super_oid;
 };
 
 static int check_has_commit(const struct object_id *oid, void *data)
@@ -940,7 +947,7 @@ static int check_has_commit(const struct object_id *oid, void *data)
 	struct repository subrepo;
 	enum object_type type;
 
-	if (repo_submodule_init(&subrepo, cb->repo, cb->path, null_oid())) {
+	if (repo_submodule_init(&subrepo, cb->repo, cb->path, cb->super_oid)) {
 		cb->result = 0;
 		goto cleanup;
 	}
@@ -968,9 +975,10 @@ cleanup:
 
 static int submodule_has_commits(struct repository *r,
 				 const char *path,
+				 const struct object_id *super_oid,
 				 struct oid_array *commits)
 {
-	struct has_commit_data has_commit = { r, 1, path };
+	struct has_commit_data has_commit = { r, 1, path, super_oid };
 
 	/*
 	 * Perform a cheap, but incorrect check for the existence of 'commits'.
@@ -1017,7 +1025,7 @@ static int submodule_needs_pushing(struct repository *r,
 				   const char *path,
 				   struct oid_array *commits)
 {
-	if (!submodule_has_commits(r, path, commits))
+	if (!submodule_has_commits(r, path, null_oid(), commits))
 		/*
 		 * NOTE: We do consider it safe to return "no" here. The
 		 * correct answer would be "We do not know" instead of
@@ -1268,7 +1276,7 @@ static void calculate_changed_submodule_paths(struct repository *r,
 		const struct submodule *submodule;
 		const char *path = NULL;
 
-		submodule = submodule_from_name(r, null_oid(), name->string);
+		submodule = submodule_from_name(r, cs_data->super_oid, name->string);
 		if (submodule)
 			path = submodule->path;
 		else
@@ -1277,7 +1285,7 @@ static void calculate_changed_submodule_paths(struct repository *r,
 		if (!path)
 			continue;
 
-		if (submodule_has_commits(r, path, cs_data->new_commits)) {
+		if (submodule_has_commits(r, path, cs_data->super_oid, cs_data->new_commits)) {
 			oid_array_clear(cs_data->new_commits);
 			*name->string = '\0';
 		}
