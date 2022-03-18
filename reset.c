@@ -172,3 +172,58 @@ leave_reset_head:
 	return ret;
 
 }
+
+int checkout_head(struct repository *r, const struct reset_head_opts *opts)
+{
+	struct lock_file lock_file = LOCK_INIT;
+	int ret = 0;
+	struct tree *tree;
+	struct tree_desc desc[2] = { { NULL }, { NULL } };
+	struct unpack_trees_options topts;
+
+	repo_hold_locked_index(r, &lock_file, LOCK_DIE_ON_ERROR);
+
+	if (repo_read_index_preload(r, NULL, 0) < 0)
+		return error(_("index file corrupt"));
+
+	refresh_index(r->index, REFRESH_QUIET, NULL, NULL, NULL);
+
+	if (unmerged_index(r->index)) {
+		error(_("you need to resolve your current index first"));
+		return 1;
+	}
+
+	memset(&topts, 0, sizeof(topts));
+	topts.head_idx = -1;
+	topts.src_index = r->index;
+	topts.dst_index = r->index;
+
+	setup_unpack_trees_porcelain(&topts, "checkout");
+	// Not present in reset
+	topts.initial_checkout = is_index_unborn(r->index);
+	topts.update = 1;
+	topts.merge = 1;
+	topts.quiet = opts->quiet;
+	topts.fn = twoway_merge;
+	topts.verbose_update = opts->show_progress;
+	topts.fn = twoway_merge;
+	topts.preserve_ignored = !opts->overwrite_ignore;
+	init_checkout_metadata(&topts.meta, opts->branch,
+				opts->oid, NULL);
+	topts.preserve_ignored = !opts->overwrite_ignore;
+	fill_tree_descriptor(r, &desc[0], opts->old_oid);
+	fill_tree_descriptor(r, &desc[1], opts->new_oid);
+
+	/* parse_tree(opts->new_tree); */
+	/* tree = opts->new_tree; */
+	/* init_tree_desc(&desc[1], tree->buffer, tree->size); */
+
+	ret = unpack_trees(2, desc, &topts);
+	clear_unpack_trees_porcelain(&topts);
+
+	if (!ret && write_locked_index(r->index, &lock_file, COMMIT_LOCK))
+		die(_("unable to write new index file"));
+
+	rollback_lock_file(&lock_file);
+	return ret;
+}

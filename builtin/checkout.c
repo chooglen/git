@@ -29,6 +29,7 @@
 #include "xdiff-interface.h"
 #include "entry.h"
 #include "parallel-checkout.h"
+#include "reset.h"
 
 static const char * const checkout_usage[] = {
 	N_("git checkout [<options>] <branch>"),
@@ -648,12 +649,18 @@ static void describe_detached_head(const char *msg, struct commit *commit)
 	strbuf_release(&sb);
 }
 
-static int reset_tree(struct tree *tree, const struct checkout_opts *o,
+static int reset_tree(const struct object_id *tree_oid, const struct checkout_opts *o,
 		      int worktree, int *writeout_error,
 		      struct branch_info *info)
 {
+	struct lock_file lock_file = LOCK_INIT;
 	struct unpack_trees_options opts;
 	struct tree_desc tree_desc;
+	int ret;
+
+	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
+	if (read_cache_preload(NULL) < 0)
+		return error(_("index file corrupt"));
 
 	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = -1;
@@ -670,8 +677,8 @@ static int reset_tree(struct tree *tree, const struct checkout_opts *o,
 	init_checkout_metadata(&opts.meta, info->refname,
 			       info->commit ? &info->commit->object.oid : null_oid(),
 			       NULL);
-	parse_tree(tree);
-	init_tree_desc(&tree_desc, tree->buffer, tree->size);
+	/* parse_tree_indirect(tree_oid); */
+	fill_tree_descriptor(the_repository, &tree_desc, tree_oid);
 	switch (unpack_trees(1, &tree_desc, &opts)) {
 	case -2:
 		*writeout_error = 1;
@@ -683,10 +690,16 @@ static int reset_tree(struct tree *tree, const struct checkout_opts *o,
 		 */
 		/* fallthrough */
 	case 0:
-		return 0;
+		ret = 0;
+		break;
 	default:
-		return 128;
+		ret = 128;
 	}
+
+	if (!ret && write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
+		die(_("unable to write new index file"));
+
+	return ret;
 }
 
 static void setup_branch_path(struct branch_info *branch)
@@ -716,72 +729,47 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			      int *writeout_error)
 {
 	int ret;
-	struct lock_file lock_file = LOCK_INIT;
-	struct tree *new_tree;
-
-	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
-	if (read_cache_preload(NULL) < 0)
-		return error(_("index file corrupt"));
+	const struct object_id *new_oid;
 
 	resolve_undo_clear();
 	if (opts->new_orphan_branch && opts->orphan_from_empty_tree) {
 		if (new_branch_info->commit)
 			BUG("'switch --orphan' should never accept a commit as starting point");
-		new_tree = parse_tree_indirect(the_hash_algo->empty_tree);
+		new_oid = the_hash_algo->empty_tree;
 	} else
-		new_tree = get_commit_tree(new_branch_info->commit);
+		new_oid = &new_branch_info->commit->object.oid;
 	if (opts->discard_changes) {
-		ret = reset_tree(new_tree, opts, 1, writeout_error, new_branch_info);
+		ret = reset_tree(new_oid, opts, 1, writeout_error, new_branch_info);
 		if (ret)
 			return ret;
+
 	} else {
-		struct tree_desc trees[2];
-		struct tree *tree;
-		struct unpack_trees_options topts;
-		const struct object_id *old_commit_oid;
+		/* const struct object_id *old_commit_oid; */
 
-		memset(&topts, 0, sizeof(topts));
-		topts.head_idx = -1;
-		topts.src_index = &the_index;
-		topts.dst_index = &the_index;
-
-		setup_unpack_trees_porcelain(&topts, "checkout");
-
-		refresh_cache(REFRESH_QUIET);
-
-		if (unmerged_cache()) {
-			error(_("you need to resolve your current index first"));
-			return 1;
-		}
+		struct reset_head_opts reset_head_opts = {
+			.oid = new_branch_info->commit ?
+				       &new_branch_info->commit->object.oid :
+				       &new_branch_info->oid,
+			.branch = new_branch_info->refname,
+			.default_reflog_action = "update_refs_for_switch lmao",
+			.quiet = opts->merge && old_branch_info->commit,
+			.show_progress = opts->show_progress,
+			.overwrite_ignore = opts->overwrite_ignore,
+			.old_oid = old_branch_info->commit ?
+					&old_branch_info->commit->object.oid :
+			the_hash_algo->empty_tree,
+			.new_oid = new_oid,
+		};
 
 		/* 2-way merge to the new branch */
-		topts.initial_checkout = is_cache_unborn();
-		topts.update = 1;
-		topts.merge = 1;
-		topts.quiet = opts->merge && old_branch_info->commit;
-		topts.verbose_update = opts->show_progress;
-		topts.fn = twoway_merge;
-		init_checkout_metadata(&topts.meta, new_branch_info->refname,
-				       new_branch_info->commit ?
-				       &new_branch_info->commit->object.oid :
-				       &new_branch_info->oid, NULL);
-		topts.preserve_ignored = !opts->overwrite_ignore;
+		/* old_commit_oid = old_branch_info->commit ? */
+		/* 	&old_branch_info->commit->object.oid : */
+		/* 	the_hash_algo->empty_tree; */
+		/* if (!tree) */
+		/* 	die(_("unable to parse commit %s"), */
+		/* 		oid_to_hex(old_commit_oid)); */
+		ret = checkout_head(the_repository, &reset_head_opts);
 
-		old_commit_oid = old_branch_info->commit ?
-			&old_branch_info->commit->object.oid :
-			the_hash_algo->empty_tree;
-		tree = parse_tree_indirect(old_commit_oid);
-		if (!tree)
-			die(_("unable to parse commit %s"),
-				oid_to_hex(old_commit_oid));
-
-		init_tree_desc(&trees[0], tree->buffer, tree->size);
-		parse_tree(new_tree);
-		tree = new_tree;
-		init_tree_desc(&trees[1], tree->buffer, tree->size);
-
-		ret = unpack_trees(2, trees, &topts);
-		clear_unpack_trees_porcelain(&topts);
 		if (ret == -1) {
 			/*
 			 * Unpack couldn't do a trivial merge; either
@@ -828,7 +816,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			o.verbosity = 0;
 			work = write_in_core_index_as_tree(the_repository);
 
-			ret = reset_tree(new_tree,
+			ret = reset_tree(new_oid,
 					 opts, 1,
 					 writeout_error, new_branch_info);
 			if (ret)
@@ -848,7 +836,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 					  old_tree);
 			if (ret < 0)
 				exit(128);
-			ret = reset_tree(new_tree,
+			ret = reset_tree(new_oid,
 					 opts, 0,
 					 writeout_error, new_branch_info);
 			strbuf_release(&o.obuf);
@@ -856,13 +844,11 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			if (ret)
 				return ret;
 		}
+
 	}
 
 	if (!cache_tree_fully_valid(active_cache_tree))
 		cache_tree_update(&the_index, WRITE_TREE_SILENT | WRITE_TREE_REPAIR);
-
-	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
-		die(_("unable to write new index file"));
 
 	if (!opts->discard_changes && !opts->quiet && new_branch_info->commit)
 		show_local_changes(&new_branch_info->commit->object, &opts->diff_options);

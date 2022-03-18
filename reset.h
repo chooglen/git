@@ -53,8 +53,15 @@ struct reset_head_opts {
 	 * being updated and the reflog messages above are omitted.
 	 */
 	const char *default_reflog_action;
+
+	unsigned int quiet;
+	unsigned int show_progress;
+	unsigned int overwrite_ignore;
+	const struct object_id *old_oid;
+	const struct object_id *new_oid;
 };
 
 int reset_head(struct repository *r, const struct reset_head_opts *opts);
 
+int checkout_head(struct repository *r, const struct reset_head_opts *opts);
 #endif
