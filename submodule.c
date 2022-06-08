@@ -2137,7 +2137,7 @@ int submodule_move_head(const char *path,
 			struct strbuf gitdir = STRBUF_INIT;
 			submodule_name_to_gitdir(&gitdir, the_repository,
 						 sub->name);
-			connect_work_tree_and_git_dir(path, gitdir.buf, 0);
+			connect_work_tree_and_git_dir(path, gitdir.buf, 0, 0);
 			strbuf_release(&gitdir);
 
 			/* make sure the index is clean as well */
@@ -2148,7 +2148,7 @@ int submodule_move_head(const char *path,
 			struct strbuf gitdir = STRBUF_INIT;
 			submodule_name_to_gitdir(&gitdir, the_repository,
 						 sub->name);
-			connect_work_tree_and_git_dir(path, gitdir.buf, 1);
+			connect_work_tree_and_git_dir(path, gitdir.buf, 1, 0);
 			strbuf_release(&gitdir);
 		}
 	}
@@ -2342,7 +2342,7 @@ void absorb_git_dir_into_superproject(const char *path,
 		if (!sub)
 			die(_("could not lookup name for submodule '%s'"), path);
 		submodule_name_to_gitdir(&sub_gitdir, the_repository, sub->name);
-		connect_work_tree_and_git_dir(path, sub_gitdir.buf, 0);
+		connect_work_tree_and_git_dir(path, sub_gitdir.buf, 0, 0);
 		strbuf_release(&sub_gitdir);
 	} else {
 		/* Is it already absorbed into the superprojects git dir? */

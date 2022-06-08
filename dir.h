@@ -574,7 +574,8 @@ void remove_untracked_cache(struct index_state *istate);
  */
 void connect_work_tree_and_git_dir(const char *work_tree,
 				   const char *git_dir,
-				   int recurse_into_nested);
+				   int recurse_into_nested,
+				   int wip_set_core_worktree);
 void relocate_gitdir(const char *path,
 		     const char *old_git_dir,
 		     const char *new_git_dir);

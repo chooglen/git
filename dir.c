@@ -3897,7 +3897,7 @@ static void connect_wt_gitdir_in_nested(const char *sub_worktree,
 		strbuf_addf(&sub_wt, "%s/%s", sub_worktree, sub->path);
 		submodule_name_to_gitdir(&sub_gd, &subrepo, sub->name);
 
-		connect_work_tree_and_git_dir(sub_wt.buf, sub_gd.buf, 1);
+		connect_work_tree_and_git_dir(sub_wt.buf, sub_gd.buf, 1, 0);
 	}
 	strbuf_release(&sub_wt);
 	strbuf_release(&sub_gd);
@@ -3906,7 +3906,8 @@ static void connect_wt_gitdir_in_nested(const char *sub_worktree,
 
 void connect_work_tree_and_git_dir(const char *work_tree_,
 				   const char *git_dir_,
-				   int recurse_into_nested)
+				   int recurse_into_nested,
+				   int wip_set_core_worktree)
 {
 	struct strbuf gitfile_sb = STRBUF_INIT;
 	struct strbuf cfg_sb = STRBUF_INIT;
@@ -3930,8 +3931,10 @@ void connect_work_tree_and_git_dir(const char *work_tree_,
 	write_file(gitfile_sb.buf, "gitdir: %s",
 		   relative_path(git_dir, work_tree, &rel_path));
 	/* Update core.worktree setting */
-	git_config_set_in_file(cfg_sb.buf, "core.worktree",
-			       relative_path(work_tree, git_dir, &rel_path));
+	if (wip_set_core_worktree) {
+		git_config_set_in_file(cfg_sb.buf, "core.worktree",
+				relative_path(work_tree, git_dir, &rel_path));
+	}
 
 	strbuf_release(&gitfile_sb);
 	strbuf_release(&cfg_sb);
@@ -3953,7 +3956,7 @@ void relocate_gitdir(const char *path, const char *old_git_dir, const char *new_
 		die_errno(_("could not migrate git directory from '%s' to '%s'"),
 			old_git_dir, new_git_dir);
 
-	connect_work_tree_and_git_dir(path, new_git_dir, 0);
+	connect_work_tree_and_git_dir(path, new_git_dir, 0, 0);
 }
 
 int path_match_flags(const char *const str, const enum path_match_flags flags)

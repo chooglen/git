@@ -1719,7 +1719,7 @@ static int clone_submodule(struct module_clone_data *clone_data)
 		strbuf_reset(&sb);
 	}
 
-	connect_work_tree_and_git_dir(clone_data->path, sm_gitdir, 0);
+	connect_work_tree_and_git_dir(clone_data->path, sm_gitdir, 0, 0);
 
 	p = git_pathdup_submodule(clone_data->path, "config");
 	if (!p)
@@ -2382,15 +2382,13 @@ static void ensure_core_worktree(const char *path)
 
 	if (!repo_config_get_string_tmp(&subrepo, "core.worktree", &cw)) {
 		char *cfg_file, *abs_path;
-		const char *rel_path;
 		struct strbuf sb = STRBUF_INIT;
 
 		cfg_file = repo_git_path(&subrepo, "config");
 
 		abs_path = absolute_pathdup(path);
-		rel_path = relative_path(abs_path, subrepo.gitdir, &sb);
 
-		git_config_set_in_file(cfg_file, "core.worktree", rel_path);
+		git_config_set_multivar_in_file(cfg_file, "core.worktree", NULL, NULL, CONFIG_FLAGS_MULTI_REPLACE);
 
 		free(cfg_file);
 		free(abs_path);

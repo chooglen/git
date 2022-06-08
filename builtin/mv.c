@@ -319,7 +319,8 @@ remove_entry:
 			if (submodule_gitfile[i] != SUBMODULE_WITH_GITDIR)
 				connect_work_tree_and_git_dir(dst,
 							      submodule_gitfile[i],
-							      1);
+							      1,
+							      0);
 		}
 
 		if (mode == WORKING_DIRECTORY)
