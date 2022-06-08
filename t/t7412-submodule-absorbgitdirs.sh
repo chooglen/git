@@ -69,11 +69,11 @@ test_expect_success 're-setup nested submodule' '
 	# is still correct (needs a rewrite of the gitfile only)
 	rm -rf sub1/.git &&
 	mv .git/modules/sub1 sub1/.git &&
-	GIT_WORK_TREE=. git -C sub1 config --unset core.worktree &&
+	# GIT_WORK_TREE=. git -C sub1 config --unset core.worktree &&
 	# fixup the nested submodule
 	echo "gitdir: ../.git/modules/nested" >sub1/nested/.git &&
-	GIT_WORK_TREE=../../../nested git -C sub1/.git/modules/nested config \
-		core.worktree "../../../nested" &&
+	# GIT_WORK_TREE=../../../nested git -C sub1/.git/modules/nested config \
+	# 	core.worktree "../../../nested" &&
 	# make sure this re-setup is correct
 	git status --ignore-submodules=none &&
 

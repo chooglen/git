@@ -168,7 +168,6 @@ replace_gitfile_with_git_dir () {
 # Note that this only supports submodules at the root level of the
 # superproject, with the default name, i.e. same as its path.
 test_git_directory_is_unchanged () {
-	return 0
 	# (
 	# 	cd ".git/modules/$1" &&
 	# 	# does core.worktree point at the right place?
@@ -177,7 +176,7 @@ test_git_directory_is_unchanged () {
 	# 	# "$1/.git/config" lacks it...
 	# 	git config --unset core.worktree
 	# ) &&
-	# diff -r ".git/modules/$1" "$1/.git" &&
+	diff -r ".git/modules/$1" "$1/.git" # &&
 	# (
 	# 	# ... and then restore.
 	# 	cd ".git/modules/$1" &&

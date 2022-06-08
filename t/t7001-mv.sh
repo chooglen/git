@@ -346,8 +346,8 @@ test_expect_success 'git mv moves a submodule with a .git directory and no .gitm
 	(
 		cd sub &&
 		rm -f .git &&
-		cp -R -P -p ../.git/modules/sub .git &&
-		GIT_WORK_TREE=. git config --unset core.worktree
+		cp -R -P -p ../.git/modules/sub .git # &&
+		# GIT_WORK_TREE=. git config --unset core.worktree
 	) &&
 	mkdir mod &&
 	git mv sub mod/sub &&
@@ -366,8 +366,8 @@ test_expect_success 'git mv moves a submodule with a .git directory and .gitmodu
 	(
 		cd sub &&
 		rm -f .git &&
-		cp -R -P -p ../.git/modules/sub .git &&
-		GIT_WORK_TREE=. git config --unset core.worktree
+		cp -R -P -p ../.git/modules/sub .git # &&
+		# GIT_WORK_TREE=. git config --unset core.worktree
 	) &&
 	mkdir mod &&
 	git mv sub mod/sub &&
