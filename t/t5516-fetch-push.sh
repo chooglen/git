@@ -14,6 +14,7 @@ This test checks the following functionality:
 * reflogs
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
