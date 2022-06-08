@@ -138,7 +138,7 @@ static struct remote *make_remote(struct remote_state *remote_state,
 	return ret;
 }
 
-static void remote_clear(struct remote *remote)
+void remote_free(struct remote *remote)
 {
 	int i;
 
@@ -148,7 +148,7 @@ static void remote_clear(struct remote *remote)
 	for (i = 0; i < remote->url_nr; i++) {
 		free((char *)remote->url[i]);
 	}
-	FREE_AND_NULL(remote->pushurl);
+	FREE_AND_NULL(remote->url);
 
 	for (i = 0; i < remote->pushurl_nr; i++) {
 		free((char *)remote->pushurl[i]);
@@ -2721,7 +2721,7 @@ void remote_state_clear(struct remote_state *remote_state)
 	int i;
 
 	for (i = 0; i < remote_state->remotes_nr; i++) {
-		remote_clear(remote_state->remotes[i]);
+		remote_free(remote_state->remotes[i]);
 	}
 	FREE_AND_NULL(remote_state->remotes);
 	remote_state->remotes_alloc = 0;

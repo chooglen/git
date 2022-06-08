@@ -126,6 +126,7 @@ typedef int each_remote_fn(struct remote *remote, void *priv);
 
 /* iterate through struct remotes */
 int for_each_remote(each_remote_fn fn, void *priv);
+void remote_free(struct remote *remote);
 
 int remote_has_url(struct remote *remote, const char *url);
 
