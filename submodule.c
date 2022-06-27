@@ -29,6 +29,25 @@ static int initialized_fetch_ref_tips;
 static struct oid_array ref_tips_before_fetch;
 static struct oid_array ref_tips_after_fetch;
 
+char *get_submodule_displaypath(const char *path, const char *prefix)
+{
+	const char *super_prefix = get_super_prefix();
+
+	if (prefix && super_prefix) {
+		BUG("cannot have prefix '%s' and superprefix '%s'",
+		    prefix, super_prefix);
+	} else if (prefix) {
+		struct strbuf sb = STRBUF_INIT;
+		char *displaypath = xstrdup(relative_path(path, prefix, &sb));
+		strbuf_release(&sb);
+		return displaypath;
+	} else if (super_prefix) {
+		return xstrfmt("%s%s", super_prefix, path);
+	} else {
+		return xstrdup(path);
+	}
+}
+
 /*
  * Check if the .gitmodules file is unmerged. Parsing of the .gitmodules file
  * will be disabled because we can't guess what might be configured in
@@ -2041,14 +2060,6 @@ void submodule_unset_core_worktree(const struct submodule *sub)
 	strbuf_release(&config_path);
 }
 
-static const char *get_super_prefix_or_empty(void)
-{
-	const char *s = get_super_prefix();
-	if (!s)
-		s = "";
-	return s;
-}
-
 static int submodule_has_dirty_index(const struct submodule *sub)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
@@ -2076,8 +2087,8 @@ static void submodule_reset_index(const char *path)
 	cp.no_stdin = 1;
 	cp.dir = path;
 
-	strvec_pushf(&cp.args, "--super-prefix=%s%s/",
-		     get_super_prefix_or_empty(), path);
+	strvec_pushf(&cp.args, "--super-prefix=%s/",
+		     get_submodule_displaypath(path, NULL));
 	/* TODO: determine if this might overwright untracked files */
 	strvec_pushl(&cp.args, "read-tree", "-u", "--reset", NULL);
 
@@ -2160,8 +2171,9 @@ int submodule_move_head(const char *path,
 	cp.no_stdin = 1;
 	cp.dir = path;
 
-	strvec_pushf(&cp.args, "--super-prefix=%s%s/",
-		     get_super_prefix_or_empty(), path);
+	strvec_pushf(&cp.args,
+		     "--super-prefix=%s/",
+		     get_submodule_displaypath(path, NULL));
 	strvec_pushl(&cp.args, "read-tree", "--recurse-submodules", NULL);
 
 	if (flags & SUBMODULE_MOVE_HEAD_DRY_RUN)
@@ -2291,8 +2303,8 @@ static void relocate_single_git_dir_into_superproject(const char *path)
 		die(_("could not create directory '%s'"), new_gitdir.buf);
 	real_new_git_dir = real_pathdup(new_gitdir.buf, 1);
 
-	fprintf(stderr, _("Migrating git directory of '%s%s' from\n'%s' to\n'%s'\n"),
-		get_super_prefix_or_empty(), path,
+	fprintf(stderr, _("Migrating git directory of '%s' from\n'%s' to\n'%s'\n"),
+		get_submodule_displaypath(path, NULL),
 		real_old_git_dir, real_new_git_dir);
 
 	relocate_gitdir(path, real_old_git_dir, real_new_git_dir);
@@ -2360,26 +2372,22 @@ void absorb_git_dir_into_superproject(const char *path,
 
 	if (flags & ABSORB_GITDIR_RECURSE_SUBMODULES) {
 		struct child_process cp = CHILD_PROCESS_INIT;
-		struct strbuf sb = STRBUF_INIT;
 
 		if (flags & ~ABSORB_GITDIR_RECURSE_SUBMODULES)
 			BUG("we don't know how to pass the flags down?");
 
-		strbuf_addstr(&sb, get_super_prefix_or_empty());
-		strbuf_addstr(&sb, path);
-		strbuf_addch(&sb, '/');
-
 		cp.dir = path;
 		cp.git_cmd = 1;
 		cp.no_stdin = 1;
-		strvec_pushl(&cp.args, "--super-prefix", sb.buf,
+		strvec_pushf(&cp.args,
+			     "--super-prefix=%s/",
+			     get_submodule_displaypath(path, NULL));
+		strvec_pushl(&cp.args,
 			     "submodule--helper",
 			     "absorb-git-dirs", NULL);
 		prepare_submodule_repo_env(&cp.env);
 		if (run_command(&cp))
 			die(_("could not recurse into submodule '%s'"), path);
-
-		strbuf_release(&sb);
 	}
 }
 

@@ -118,26 +118,6 @@ static int resolve_relative_url_test(int argc, const char **argv, const char *pr
 	return 0;
 }
 
-/* the result should be freed by the caller. */
-static char *get_submodule_displaypath(const char *path, const char *prefix)
-{
-	const char *super_prefix = get_super_prefix();
-
-	if (prefix && super_prefix) {
-		BUG("cannot have prefix '%s' and superprefix '%s'",
-		    prefix, super_prefix);
-	} else if (prefix) {
-		struct strbuf sb = STRBUF_INIT;
-		char *displaypath = xstrdup(relative_path(path, prefix, &sb));
-		strbuf_release(&sb);
-		return displaypath;
-	} else if (super_prefix) {
-		return xstrfmt("%s%s", super_prefix, path);
-	} else {
-		return xstrdup(path);
-	}
-}
-
 static char *compute_rev_name(const char *sub_path, const char* object_id)
 {
 	struct strbuf sb = STRBUF_INIT;

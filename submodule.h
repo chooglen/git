@@ -41,6 +41,12 @@ struct submodule_update_strategy {
 	.type = SM_UPDATE_UNSPECIFIED, \
 }
 
+/*
+ * Returns the submodule's path relative to the original process' CWD,
+ * either using prefix (at the superproject level) or the
+ * "--super-prefix" option (when recursing into submodules).
+ */
+char *get_submodule_displaypath(const char *path, const char *prefix);
 int is_gitmodules_unmerged(struct index_state *istate);
 int is_writing_gitmodules_ok(void);
 int is_staging_gitmodules_ok(struct index_state *istate);
