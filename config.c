@@ -2655,11 +2655,29 @@ static void read_protected_config(void)
 	free(user_config);
 }
 
+/* Ensure that protected_config has been initialized. */
+static void git_protected_config_check_init(void)
+{
+	if (protected_config.hash_initialized)
+		return;
+	read_protected_config();
+}
+
 void git_protected_config(config_fn_t fn, void *data)
 {
-	if (!protected_config.hash_initialized)
-		read_protected_config();
+	git_protected_config_check_init();
 	configset_iter(&protected_config, fn, data);
+}
+
+int git_protected_config_get_string(const char *key,
+				    char **dest)
+{
+	int ret;
+	git_protected_config_check_init();
+	ret = git_configset_get_string(&protected_config, key, dest);
+	if (ret < 0)
+		git_die_config(key, NULL);
+	return ret;
 }
 
 /* Functions used historically to read configuration from 'the_repository' */

@@ -92,7 +92,7 @@ struct upload_pack_data {
 
 	struct packet_writer writer;
 
-	const char *pack_objects_hook;
+	char *pack_objects_hook;
 
 	unsigned stateless_rpc : 1;				/* v0 only */
 	unsigned no_done : 1;					/* v0 only */
@@ -159,7 +159,7 @@ static void upload_pack_data_clear(struct upload_pack_data *data)
 	list_objects_filter_release(&data->filter_options);
 	string_list_clear(&data->allowed_filters, 0);
 
-	free((char *)data->pack_objects_hook);
+	free(data->pack_objects_hook);
 }
 
 static void reset_timeout(unsigned int timeout)
@@ -1327,19 +1327,12 @@ static int upload_pack_config(const char *var, const char *value, void *cb_data)
 	return parse_hide_refs_config(var, value, "uploadpack");
 }
 
-static int upload_pack_protected_config(const char *var, const char *value, void *cb_data)
-{
-	struct upload_pack_data *data = cb_data;
-
-	if (!strcmp("uploadpack.packobjectshook", var))
-		return git_config_string(&data->pack_objects_hook, var, value);
-	return 0;
-}
-
 static void get_upload_pack_config(struct upload_pack_data *data)
 {
 	git_config(upload_pack_config, data);
-	git_protected_config(upload_pack_protected_config, data);
+	git_protected_config_get_string("uploadpack.packobjectshook",
+					&data->pack_objects_hook);
+
 }
 
 void upload_pack(const int advertise_refs, const int stateless_rpc,
