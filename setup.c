@@ -1145,29 +1145,22 @@ static int ensure_valid_ownership(const char *path)
 	return 0;
 }
 
-static int discovery_bare_cb(const char *key, const char *value, void *d)
-{
-	enum discovery_bare_allowed *discovery_bare_allowed = d;
-
-	if (strcmp(key, "discovery.bare"))
-		return 0;
-
-	if (!strcmp(value, "never")) {
-		*discovery_bare_allowed = DISCOVERY_BARE_NEVER;
-		return 0;
-	}
-	if (!strcmp(value, "always")) {
-		*discovery_bare_allowed = DISCOVERY_BARE_ALWAYS;
-		return 0;
-	}
-	return -1;
-}
-
 static enum discovery_bare_allowed get_discovery_bare(void)
 {
-	enum discovery_bare_allowed result = DISCOVERY_BARE_ALWAYS;
-	git_protected_config(discovery_bare_cb, &result);
-	return result;
+	char *value;
+	enum discovery_bare_allowed discovery_bare_allowed = DISCOVERY_BARE_ALWAYS;
+
+	if (git_protected_config_get_string("discovery.bare", &value))
+		return discovery_bare_allowed;
+
+	if (!strcmp(value, "never")) {
+		discovery_bare_allowed = DISCOVERY_BARE_NEVER;
+	} else if (!strcmp(value, "always")) {
+		discovery_bare_allowed = DISCOVERY_BARE_ALWAYS;
+	}
+
+	free(value);
+	return discovery_bare_allowed;
 }
 
 static const char *discovery_bare_allowed_to_string(
