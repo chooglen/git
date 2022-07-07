@@ -1104,46 +1104,45 @@ static int canonicalize_ceiling_entry(struct string_list_item *item,
 	}
 }
 
-struct safe_directory_data {
-	const char *path;
-	int is_safe;
-};
-
-static int safe_directory_cb(const char *key, const char *value, void *d)
-{
-	struct safe_directory_data *data = d;
-
-	if (strcmp(key, "safe.directory"))
-		return 0;
-
-	if (!value || !*value) {
-		data->is_safe = 0;
-	} else if (!strcmp(value, "*")) {
-		data->is_safe = 1;
-	} else {
-		const char *interpolated = NULL;
-
-		if (!git_config_pathname(&interpolated, key, value) &&
-		    !fspathcmp(data->path, interpolated ? interpolated : value))
-			data->is_safe = 1;
-
-		free((char *)interpolated);
-	}
-
-	return 0;
-}
-
 static int ensure_valid_ownership(const char *path)
 {
-	struct safe_directory_data data = { .path = path };
+	int i;
+	const struct string_list *safe_directory_values;
 
 	if (!git_env_bool("GIT_TEST_ASSUME_DIFFERENT_OWNER", 0) &&
 	    is_path_owned_by_current_user(path))
 		return 1;
 
-	git_protected_config(safe_directory_cb, &data);
+	safe_directory_values = git_protected_config_get_value_multi("safe.directory");
+	if (!safe_directory_values)
+		return 0;
 
-	return data.is_safe;
+	/*
+	 * Iterate from the back because safe_directory_values is
+	 * ordered earliest to latest, but we want later values to
+	 * 'win'.
+	 *
+	 * NEEDSWORK does the string list ordering have any implication
+	 * on global vs system config?
+	 */
+	for(i = safe_directory_values->nr - 1; i >= 0; i--) {
+		char *value = safe_directory_values->items[i].string;
+		if (!value || !*value) {
+			return 0;
+		} else if (!strcmp(value, "*")) {
+			return 1;
+		} else {
+			const char *interpolated = NULL;
+			int is_safe = !git_config_pathname(&interpolated, "safe.directory", value) &&
+				!fspathcmp(path, interpolated ? interpolated : value);
+
+			free((char *)interpolated);
+			if (is_safe)
+				return 1;
+		}
+	}
+
+	return 0;
 }
 
 static int discovery_bare_cb(const char *key, const char *value, void *d)

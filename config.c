@@ -2680,6 +2680,12 @@ int git_protected_config_get_string(const char *key,
 	return ret;
 }
 
+const struct string_list *git_protected_config_get_value_multi(const char *key)
+{
+	git_protected_config_check_init();
+	return git_configset_get_value_multi(&protected_config, key);
+}
+
 /* Functions used historically to read configuration from 'the_repository' */
 void git_config(config_fn_t fn, void *data)
 {

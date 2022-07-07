@@ -521,6 +521,7 @@ int repo_config_get_pathname(struct repository *repo,
  */
 void git_protected_config(config_fn_t fn, void *data);
 int git_protected_config_get_string(const char *key, char **dest);
+const struct string_list *git_protected_config_get_value_multi(const char *key);
 
 /**
  * Querying For Specific Variables
