@@ -465,6 +465,14 @@ For C programs:
    use your own debugger and arguments. Example: `GIT_DEBUGGER="ddd --gdb"
    ./bin-wrappers/git log` (See `wrap-for-bin.sh`.)
 
+ - When zero-initializing an auto variable that is a struct or union in
+   its definition, use "{ 0 }". This tells the language to initialize
+   the members to reasonable values, even if the first member in the
+   struct is of a number, a pointer, or a compound type. Do not use
+   "memset(&ptr, 0, sizeof(ptr))"; it's noisier and won't produce the
+   right result on platforms where the 'correct' initial value is not
+   all 0s.
+
 For Perl programs:
 
  - Most of the C guidelines above apply.
