@@ -2094,9 +2094,8 @@ static void find_copy_in_blob(struct blame_scoreboard *sb,
 {
 	const char *cp;
 	mmfile_t file_o;
-	struct handle_split_cb_data d;
+	struct handle_split_cb_data d = { 0 };
 
-	memset(&d, 0, sizeof(d));
 	d.sb = sb; d.ent = ent; d.parent = parent; d.split = split;
 	/*
 	 * Prepare mmfile that contains only the lines in ent.

@@ -108,8 +108,8 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	char line[1000];
 	struct object *tree1, *tree2;
 	static struct rev_info *opt = &log_tree_opt;
-	struct setup_revision_opt s_r_opt;
-	struct userformat_want w;
+	struct setup_revision_opt s_r_opt = { 0 };
+	struct userformat_want w = { 0 };
 	int read_stdin = 0;
 	int merge_base = 0;
 
@@ -123,13 +123,11 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 	opt->abbrev = 0;
 	opt->diff = 1;
 	opt->disable_stdin = 1;
-	memset(&s_r_opt, 0, sizeof(s_r_opt));
 	s_r_opt.tweak = diff_tree_tweak_rev;
 
 	prefix = precompose_argv_prefix(argc, argv, prefix);
 	argc = setup_revisions(argc, argv, opt, &s_r_opt);
 
-	memset(&w, 0, sizeof(w));
 	userformat_find_requirements(NULL, &w);
 
 	if (!opt->show_notes_given && w.notes)

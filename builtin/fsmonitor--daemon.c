@@ -1264,11 +1264,9 @@ cleanup:
 
 static int fsmonitor_run_daemon(void)
 {
-	struct fsmonitor_daemon_state state;
+	struct fsmonitor_daemon_state state = { 0 };
 	const char *home;
 	int err;
-
-	memset(&state, 0, sizeof(state));
 
 	hashmap_init(&state.cookies, cookies_cmp, NULL, 0);
 	pthread_mutex_init(&state.main_lock, NULL);

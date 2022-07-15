@@ -422,7 +422,7 @@ static void print_ref_list(struct ref_filter *filter, struct ref_sorting *sortin
 			   struct ref_format *format, struct string_list *output)
 {
 	int i;
-	struct ref_array array;
+	struct ref_array array = { 0 };
 	struct strbuf out = STRBUF_INIT;
 	struct strbuf err = STRBUF_INIT;
 	int maxwidth = 0;
@@ -436,8 +436,6 @@ static void print_ref_list(struct ref_filter *filter, struct ref_sorting *sortin
 	 */
 	if (filter->kind != FILTER_REFS_REMOTES)
 		remote_prefix = "remotes/";
-
-	memset(&array, 0, sizeof(array));
 
 	filter_refs(&array, filter, filter->kind);
 

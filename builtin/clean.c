@@ -287,7 +287,7 @@ static void pretty_print_dels(void)
 	struct string_list_item *item;
 	struct strbuf buf = STRBUF_INIT;
 	const char *qname;
-	struct column_options copts;
+	struct column_options copts = { 0 };
 
 	for_each_string_list_item(item, &del_list) {
 		qname = quote_path(item->string, NULL, &buf, 0);
@@ -299,7 +299,6 @@ static void pretty_print_dels(void)
 	 * about layout strategy and stuff
 	 */
 	colopts = (colopts & ~COL_ENABLE_MASK) | COL_ENABLED;
-	memset(&copts, 0, sizeof(copts));
 	copts.indent = "  ";
 	copts.padding = 2;
 	print_columns(&list, colopts, &copts);
@@ -310,10 +309,9 @@ static void pretty_print_dels(void)
 static void pretty_print_menus(struct string_list *menu_list)
 {
 	unsigned int local_colopts = 0;
-	struct column_options copts;
+	struct column_options copts = { 0 };
 
 	local_colopts = COL_ENABLED | COL_ROW;
-	memset(&copts, 0, sizeof(copts));
 	copts.indent = "  ";
 	copts.padding = 2;
 	print_columns(menu_list, local_colopts, &copts);

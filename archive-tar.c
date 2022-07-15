@@ -235,9 +235,8 @@ static void write_extended_header(struct archiver_args *args,
 				  const struct object_id *oid,
 				  const void *buffer, unsigned long size)
 {
-	struct ustar_header header;
+	struct ustar_header header = { 0 };
 	unsigned int mode;
-	memset(&header, 0, sizeof(header));
 	*header.typeflag = TYPEFLAG_EXT_HEADER;
 	mode = 0100666;
 	xsnprintf(header.name, sizeof(header.name), "%s.paxheader", oid_to_hex(oid));
@@ -252,12 +251,10 @@ static int write_tar_entry(struct archiver_args *args,
 			   unsigned int mode,
 			   void *buffer, unsigned long size)
 {
-	struct ustar_header header;
+	struct ustar_header header = { 0 };
 	struct strbuf ext_header = STRBUF_INIT;
 	unsigned long size_in_header;
 	int err = 0;
-
-	memset(&header, 0, sizeof(header));
 
 	if (S_ISDIR(mode) || S_ISGITLINK(mode)) {
 		*header.typeflag = TYPEFLAG_DIR;

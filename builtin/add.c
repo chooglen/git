@@ -126,10 +126,9 @@ static void update_callback(struct diff_queue_struct *q,
 int add_files_to_cache(const char *prefix,
 		       const struct pathspec *pathspec, int flags)
 {
-	struct update_callback_data data;
+	struct update_callback_data data = { 0 };
 	struct rev_info rev;
 
-	memset(&data, 0, sizeof(data));
 	data.flags = flags;
 
 	repo_init_revisions(the_repository, &rev, prefix);

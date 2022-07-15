@@ -461,8 +461,8 @@ int validate_new_branchname(const char *name, struct strbuf *ref, int force)
 static int check_tracking_branch(struct remote *remote, void *cb_data)
 {
 	char *tracking_branch = cb_data;
-	struct refspec_item query;
-	memset(&query, 0, sizeof(struct refspec_item));
+	struct refspec_item query = { 0 };
+
 	query.dst = tracking_branch;
 	return !remote_find_tracking(remote, &query);
 }
