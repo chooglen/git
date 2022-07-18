@@ -476,8 +476,8 @@ static int save_files_dirs(const struct object_id *oid,
 
 static void get_files_dirs(struct merge_options *opt, struct tree *tree)
 {
-	struct pathspec match_all;
-	memset(&match_all, 0, sizeof(match_all));
+	struct pathspec match_all = { 0 };
+
 	read_tree(opt->repo, tree,
 		  &match_all, save_files_dirs, opt);
 }
@@ -1116,10 +1116,9 @@ static int find_first_merges(struct repository *repo,
 	const char *rev_args[] = { "rev-list", "--merges", "--ancestry-path",
 				   "--all", merged_revision, NULL };
 	struct rev_info revs;
-	struct setup_revision_opt rev_opts;
+	struct setup_revision_opt rev_opts = { 0 };
 
 	memset(result, 0, sizeof(struct object_array));
-	memset(&rev_opts, 0, sizeof(rev_opts));
 
 	/* get all revisions that merge commit a */
 	xsnprintf(merged_revision, sizeof(merged_revision), "^%s",

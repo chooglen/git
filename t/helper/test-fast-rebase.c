@@ -96,7 +96,7 @@ int cmd__fast_rebase(int argc, const char **argv)
 	struct commit *commit;
 	struct merge_options merge_opt;
 	struct tree *next_tree, *base_tree, *head_tree;
-	struct merge_result result;
+	struct merge_result result = { 0 };
 	struct strbuf reflog_msg = STRBUF_INIT;
 	struct strbuf branch_name = STRBUF_INIT;
 	int ret = 0;
@@ -151,7 +151,6 @@ int cmd__fast_rebase(int argc, const char **argv)
 	}
 
 	init_merge_options(&merge_opt, the_repository);
-	memset(&result, 0, sizeof(result));
 	merge_opt.show_rename_progress = 1;
 	merge_opt.branch1 = "HEAD";
 	head_tree = get_commit_tree(onto);

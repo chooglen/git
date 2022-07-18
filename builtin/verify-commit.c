@@ -22,10 +22,8 @@ static const char * const verify_commit_usage[] = {
 
 static int run_gpg_verify(struct commit *commit, unsigned flags)
 {
-	struct signature_check signature_check;
+	struct signature_check signature_check = { 0 };
 	int ret;
-
-	memset(&signature_check, 0, sizeof(signature_check));
 
 	ret = check_commit_signature(commit, &signature_check);
 	print_signature_buffer(&signature_check, flags);

@@ -765,14 +765,13 @@ static int compare_objects(const unsigned char *buf, unsigned long size,
 
 static int check_collison(struct object_entry *entry)
 {
-	struct compare_data data;
+	struct compare_data data = { 0 };
 	enum object_type type;
 	unsigned long size;
 
 	if (entry->size <= big_file_threshold || entry->type != OBJ_BLOB)
 		return -1;
 
-	memset(&data, 0, sizeof(data));
 	data.entry = entry;
 	data.st = open_istream(the_repository, &entry->idx.oid, &type, &size,
 			       NULL);

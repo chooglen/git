@@ -270,7 +270,7 @@ struct extra_file_info {
 int write_archive_entries(struct archiver_args *args,
 		write_archive_entry_fn_t write_entry)
 {
-	struct archiver_context context;
+	struct archiver_context context = { 0 };
 	struct unpack_trees_options opts;
 	struct tree_desc t;
 	int err;
@@ -294,7 +294,6 @@ int write_archive_entries(struct archiver_args *args,
 			return err;
 	}
 
-	memset(&context, 0, sizeof(context));
 	context.args = args;
 	context.write_entry = write_entry;
 

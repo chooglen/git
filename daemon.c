@@ -679,12 +679,11 @@ static void lookup_hostname(struct hostinfo *hi)
 {
 	if (!hi->hostname_lookup_done && hi->hostname.len) {
 #ifndef NO_IPV6
-		struct addrinfo hints;
+		struct addrinfo hints = { 0 };
 		struct addrinfo *ai;
 		int gai;
 		static char addrbuf[HOST_NAME_MAX + 1];
 
-		memset(&hints, 0, sizeof(hints));
 		hints.ai_flags = AI_CANONNAME;
 
 		gai = getaddrinfo(hi->hostname.buf, NULL, &hints, &ai);

@@ -531,7 +531,7 @@ static void *server_thread_proc(void *_server_thread_data)
 {
 	struct ipc_server_thread_data *server_thread_data = _server_thread_data;
 	HANDLE hEventConnected = INVALID_HANDLE_VALUE;
-	OVERLAPPED oConnect;
+	OVERLAPPED oConnect = { 0 };
 	enum connect_result cr;
 	int ret;
 
@@ -543,7 +543,6 @@ static void *server_thread_proc(void *_server_thread_data)
 
 	hEventConnected = CreateEventW(NULL, TRUE, FALSE, NULL);
 
-	memset(&oConnect, 0, sizeof(oConnect));
 	oConnect.hEvent = hEventConnected;
 
 	for (;;) {

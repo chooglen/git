@@ -1698,8 +1698,8 @@ static void fill_remote_ref_details(struct used_atom *atom, const char *refname,
 char *get_head_description(void)
 {
 	struct strbuf desc = STRBUF_INIT;
-	struct wt_status_state state;
-	memset(&state, 0, sizeof(state));
+	struct wt_status_state state = { 0 };
+
 	wt_status_get_state(the_repository, &state, 1);
 	if (state.rebase_in_progress ||
 	    state.rebase_interactive_in_progress) {

@@ -183,7 +183,7 @@ static void name_rev(struct commit *start_commit,
 		const char *tip_name, timestamp_t taggerdate,
 		int from_tag, int deref)
 {
-	struct prio_queue queue;
+	struct prio_queue queue = { 0 };
 	struct commit *commit;
 	struct commit **parents_to_queue = NULL;
 	size_t parents_to_queue_nr, parents_to_queue_alloc = 0;
@@ -201,8 +201,7 @@ static void name_rev(struct commit *start_commit,
 		start_name->tip_name = xstrfmt("%s^0", tip_name);
 	else
 		start_name->tip_name = xstrdup(tip_name);
-
-	memset(&queue, 0, sizeof(queue)); /* Use the prio_queue as LIFO */
+	/* Use the prio_queue as LIFO */
 	prio_queue_put(&queue, start_commit);
 
 	while ((commit = prio_queue_get(&queue))) {

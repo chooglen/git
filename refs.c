@@ -965,9 +965,8 @@ int read_ref_at(struct ref_store *refs, const char *refname,
 		struct object_id *oid, char **msg,
 		timestamp_t *cutoff_time, int *cutoff_tz, int *cutoff_cnt)
 {
-	struct read_ref_at_cb cb;
+	struct read_ref_at_cb cb = { 0 };
 
-	memset(&cb, 0, sizeof(cb));
 	cb.refname = refname;
 	cb.at_time = at_time;
 	cb.cnt = cnt;

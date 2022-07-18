@@ -165,7 +165,7 @@ static void cmd_log_init_defaults(struct rev_info *rev)
 static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 			 struct rev_info *rev, struct setup_revision_opt *opt)
 {
-	struct userformat_want w;
+	struct userformat_want w = { 0 };
 	int quiet = 0, source = 0, mailmap;
 	static struct line_opt_callback_data line_cb = {NULL, NULL, STRING_LIST_INIT_DUP};
 	static struct string_list decorate_refs_exclude = STRING_LIST_INIT_NODUP;
@@ -213,7 +213,6 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 	if (rev->line_level_traverse && rev->prune_data.nr)
 		die(_("-L<range>:<file> cannot be used with pathspec"));
 
-	memset(&w, 0, sizeof(w));
 	userformat_find_requirements(NULL, &w);
 
 	if (!rev->show_notes_given && (!rev->pretty_given || w.notes))
@@ -390,7 +389,7 @@ static void early_output(int signal)
 
 static void setup_early_output(void)
 {
-	struct sigaction sa;
+	struct sigaction sa = { 0 };
 
 	/*
 	 * Set up the signal handler, minimally intrusively:
@@ -399,7 +398,7 @@ static void setup_early_output(void)
 	 * system dependencies and headers), and using
 	 * SA_RESTART.
 	 */
-	memset(&sa, 0, sizeof(sa));
+
 	sa.sa_handler = early_output;
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART;
@@ -556,7 +555,7 @@ static int git_log_config(const char *var, const char *value, void *cb)
 int cmd_whatchanged(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
-	struct setup_revision_opt opt;
+	struct setup_revision_opt opt = { 0 };
 
 	init_log_defaults();
 	git_config(git_log_config, NULL);
@@ -566,7 +565,6 @@ int cmd_whatchanged(int argc, const char **argv, const char *prefix)
 
 	rev.diff = 1;
 	rev.simplify_history = 0;
-	memset(&opt, 0, sizeof(opt));
 	opt.def = "HEAD";
 	opt.revarg_opt = REVARG_COMMITTISH;
 	cmd_log_init(argc, argv, prefix, &rev, &opt);
@@ -669,8 +667,8 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
 	struct object_array_entry *objects;
-	struct setup_revision_opt opt;
-	struct pathspec match_all;
+	struct setup_revision_opt opt = { 0 };
+	struct pathspec match_all = { 0 };
 	int i, count, ret = 0;
 
 	init_log_defaults();
@@ -681,7 +679,6 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 		the_repository->settings.command_requires_full_index = 0;
 	}
 
-	memset(&match_all, 0, sizeof(match_all));
 	repo_init_revisions(the_repository, &rev, prefix);
 	git_config(grep_config, &rev.grep_filter);
 
@@ -690,7 +687,6 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 	rev.no_walk = 1;
 	rev.diffopt.stat_width = -1; 	/* Scale to real terminal size */
 
-	memset(&opt, 0, sizeof(opt));
 	opt.def = "HEAD";
 	opt.tweak = show_setup_revisions_tweak;
 	cmd_log_init(argc, argv, prefix, &rev, &opt);
@@ -765,7 +761,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 int cmd_log_reflog(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
-	struct setup_revision_opt opt;
+	struct setup_revision_opt opt = { 0 };
 
 	init_log_defaults();
 	git_config(git_log_config, NULL);
@@ -775,7 +771,6 @@ int cmd_log_reflog(int argc, const char **argv, const char *prefix)
 	git_config(grep_config, &rev.grep_filter);
 
 	rev.verbose_header = 1;
-	memset(&opt, 0, sizeof(opt));
 	opt.def = "HEAD";
 	cmd_log_init_defaults(&rev);
 	rev.abbrev_commit = 1;
@@ -801,7 +796,7 @@ static void log_setup_revisions_tweak(struct rev_info *rev,
 int cmd_log(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info rev;
-	struct setup_revision_opt opt;
+	struct setup_revision_opt opt = { 0 };
 
 	init_log_defaults();
 	git_config(git_log_config, NULL);
@@ -810,7 +805,6 @@ int cmd_log(int argc, const char **argv, const char *prefix)
 	git_config(grep_config, &rev.grep_filter);
 
 	rev.always_show_header = 1;
-	memset(&opt, 0, sizeof(opt));
 	opt.def = "HEAD";
 	opt.revarg_opt = REVARG_COMMITTISH;
 	opt.tweak = log_setup_revisions_tweak;
@@ -1771,7 +1765,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	struct commit **list = NULL;
 	struct rev_info rev;
 	char *to_free = NULL;
-	struct setup_revision_opt s_r_opt;
+	struct setup_revision_opt s_r_opt = { 0 };
 	int nr = 0, total, i;
 	int use_stdout = 0;
 	int start_number = -1;
@@ -1791,7 +1785,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	char *cover_from_description_arg = NULL;
 	char *branch_name = NULL;
 	char *base_commit = NULL;
-	struct base_tree_info bases;
+	struct base_tree_info bases = { 0 };
 	struct commit *base;
 	int show_progress = 0;
 	struct progress *progress = NULL;
@@ -1910,7 +1904,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 	rev.diffopt.flags.recursive = 1;
 	rev.diffopt.no_free = 1;
 	rev.subject_prefix = fmt_patch_subject_prefix;
-	memset(&s_r_opt, 0, sizeof(s_r_opt));
 	s_r_opt.def = "HEAD";
 	s_r_opt.revarg_opt = REVARG_COMMITTISH;
 
@@ -2185,7 +2178,6 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		signature = strbuf_detach(&buf, NULL);
 	}
 
-	memset(&bases, 0, sizeof(bases));
 	base = get_base_commit(base_commit, list, nr);
 	if (base) {
 		reset_revision_walk();

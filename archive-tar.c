@@ -322,7 +322,7 @@ static void write_global_extended_header(struct archiver_args *args)
 {
 	const struct object_id *oid = args->commit_oid;
 	struct strbuf ext_header = STRBUF_INIT;
-	struct ustar_header header;
+	struct ustar_header header = { 0 };
 	unsigned int mode;
 
 	if (oid)
@@ -338,7 +338,6 @@ static void write_global_extended_header(struct archiver_args *args)
 	if (!ext_header.len)
 		return;
 
-	memset(&header, 0, sizeof(header));
 	*header.typeflag = TYPEFLAG_GLOBAL_HEADER;
 	mode = 0100666;
 	xsnprintf(header.name, sizeof(header.name), "pax_global_header");

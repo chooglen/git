@@ -66,7 +66,7 @@ static void progress_interval(int signum)
 
 static void set_progress_signal(void)
 {
-	struct sigaction sa;
+	struct sigaction sa = { 0 };
 	struct itimerval v;
 
 	if (progress_testing)
@@ -74,7 +74,6 @@ static void set_progress_signal(void)
 
 	progress_update = 0;
 
-	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = progress_interval;
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART;

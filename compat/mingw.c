@@ -1539,8 +1539,8 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 			      int prepend_cmd, int fhin, int fhout, int fherr)
 {
 	static int restrict_handle_inheritance = -1;
-	STARTUPINFOEXW si;
-	PROCESS_INFORMATION pi;
+	STARTUPINFOEXW si = { 0 };
+	PROCESS_INFORMATION pi = { 0 };
 	LPPROC_THREAD_ATTRIBUTE_LIST attr_list = NULL;
 	HANDLE stdhandles[3];
 	DWORD stdhandles_count = 0;
@@ -1594,7 +1594,6 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 		 */
 		CloseHandle(cons);
 	}
-	memset(&si, 0, sizeof(si));
 	si.StartupInfo.cb = sizeof(si);
 	si.StartupInfo.hStdInput = winansi_get_osfhandle(fhin);
 	si.StartupInfo.hStdOutput = winansi_get_osfhandle(fhout);
@@ -1668,7 +1667,6 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 
 	wenvblk = make_environment_block(deltaenv);
 
-	memset(&pi, 0, sizeof(pi));
 	if (restrict_handle_inheritance && stdhandles_count &&
 	    (InitializeProcThreadAttributeList(NULL, 1, 0, &size) ||
 	     GetLastError() == ERROR_INSUFFICIENT_BUFFER) &&

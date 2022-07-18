@@ -54,8 +54,8 @@ static int tree_is_complete(const struct object_id *oid)
 
 static int commit_is_complete(struct commit *commit)
 {
-	struct object_array study;
-	struct object_array found;
+	struct object_array study = { 0 };
+	struct object_array found = { 0 };
 	int is_incomplete = 0;
 	int i;
 
@@ -71,8 +71,6 @@ static int commit_is_complete(struct commit *commit)
 	 * If some of the objects that are needed to complete this
 	 * commit are missing, mark this commit as INCOMPLETE.
 	 */
-	memset(&study, 0, sizeof(study));
-	memset(&found, 0, sizeof(found));
 	add_object_array(&commit->object, NULL, &study);
 	add_object_array(&commit->object, NULL, &found);
 	commit->object.flags |= STUDYING;

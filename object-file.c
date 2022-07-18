@@ -2152,16 +2152,16 @@ static void check_tree(const void *buf, size_t size)
 
 static void check_commit(const void *buf, size_t size)
 {
-	struct commit c;
-	memset(&c, 0, sizeof(c));
+	struct commit c = { 0 };
+
 	if (parse_commit_buffer(the_repository, &c, buf, size, 0))
 		die(_("corrupt commit"));
 }
 
 static void check_tag(const void *buf, size_t size)
 {
-	struct tag t;
-	memset(&t, 0, sizeof(t));
+	struct tag t = { 0 };
+
 	if (parse_tag_buffer(the_repository, &t, buf, size))
 		die(_("corrupt tag"));
 }

@@ -75,8 +75,8 @@ static void refspec_append_mapped(struct refspec *refspec, const char *ref,
 	}
 
 	if (remote->push.nr) {
-		struct refspec_item query;
-		memset(&query, 0, sizeof(struct refspec_item));
+		struct refspec_item query = { 0 };
+
 		query.src = matched->name;
 		if (!query_refspecs(&remote->push, &query) && query.dst) {
 			refspec_appendf(refspec, "%s%s:%s",

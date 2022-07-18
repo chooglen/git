@@ -640,7 +640,7 @@ void assign_shallow_commits_to_refs(struct shallow_info *info,
 	struct oid_array *ref = info->ref;
 	unsigned int i, nr;
 	int *shallow, nr_shallow = 0;
-	struct paint_info pi;
+	struct paint_info pi = { 0 };
 
 	trace_printf_key(&trace_shallow, "shallow: assign_shallow_commits_to_refs\n");
 	ALLOC_ARRAY(shallow, info->nr_ours + info->nr_theirs);
@@ -662,7 +662,6 @@ void assign_shallow_commits_to_refs(struct shallow_info *info,
 		o->flags &= ~(UNINTERESTING | BOTTOM | SEEN);
 	}
 
-	memset(&pi, 0, sizeof(pi));
 	init_ref_bitmap(&pi.ref_bitmap);
 	pi.nr_bits = ref->nr;
 
@@ -749,7 +748,7 @@ static void post_assign_shallow(struct shallow_info *info,
 	uint32_t **bitmap;
 	int dst, i, j;
 	int bitmap_nr = DIV_ROUND_UP(info->ref->nr, 32);
-	struct commit_array ca;
+	struct commit_array ca = { 0 };
 
 	trace_printf_key(&trace_shallow, "shallow: post_assign_shallow\n");
 	if (ref_status)
@@ -772,7 +771,6 @@ static void post_assign_shallow(struct shallow_info *info,
 	}
 	info->nr_theirs = dst;
 
-	memset(&ca, 0, sizeof(ca));
 	head_ref(add_ref, &ca);
 	for_each_ref(add_ref, &ca);
 
@@ -806,9 +804,8 @@ int delayed_reachability_test(struct shallow_info *si, int c)
 						      &si->shallow->oid[c]);
 
 		if (!si->commits) {
-			struct commit_array ca;
+			struct commit_array ca = { 0 };
 
-			memset(&ca, 0, sizeof(ca));
 			head_ref(add_ref, &ca);
 			for_each_ref(add_ref, &ca);
 			si->commits = ca.commits;

@@ -828,7 +828,7 @@ static int match_object_header_date(const char *date, timestamp_t *timestamp, in
    (i.e. English) day/month names, and it doesn't work correctly with %z. */
 int parse_date_basic(const char *date, timestamp_t *timestamp, int *offset)
 {
-	struct tm tm;
+	struct tm tm = { 0 };
 	int tm_gmt;
 	timestamp_t dummy_timestamp;
 	int dummy_offset;
@@ -838,7 +838,6 @@ int parse_date_basic(const char *date, timestamp_t *timestamp, int *offset)
 	if (!offset)
 		offset = &dummy_offset;
 
-	memset(&tm, 0, sizeof(tm));
 	tm.tm_year = -1;
 	tm.tm_mon = -1;
 	tm.tm_mday = -1;

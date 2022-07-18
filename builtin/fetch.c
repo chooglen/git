@@ -256,7 +256,7 @@ static void add_merge_config(struct ref **head,
 
 	for (i = 0; i < branch->merge_nr; i++) {
 		struct ref *rm, **old_tail = *tail;
-		struct refspec_item refspec;
+		struct refspec_item refspec = { 0 };
 
 		for (rm = *head; rm; rm = rm->next) {
 			if (branch_merge_matches(branch, i, rm->name)) {
@@ -277,7 +277,6 @@ static void add_merge_config(struct ref **head,
 		 * there is no entry in the resulting FETCH_HEAD marked
 		 * for merging.
 		 */
-		memset(&refspec, 0, sizeof(refspec));
 		refspec.src = branch->merge[i]->src;
 		get_fetch_map(remote_refs, &refspec, tail, 1);
 		for (rm = *old_tail; rm; rm = rm->next)

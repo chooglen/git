@@ -92,12 +92,11 @@ static int init_patch_id_entry(struct patch_id *patch,
 struct patch_id *patch_id_iter_first(struct commit *commit,
 				     struct patch_ids *ids)
 {
-	struct patch_id patch;
+	struct patch_id patch = { 0 };
 
 	if (!patch_id_defined(commit))
 		return NULL;
 
-	memset(&patch, 0, sizeof(patch));
 	if (init_patch_id_entry(&patch, commit, ids))
 		return NULL;
 

@@ -180,10 +180,9 @@ static struct strategy *get_strategy(const char *name)
 			return &all_strategy[i];
 
 	if (!loaded) {
-		struct cmdnames not_strategies;
+		struct cmdnames not_strategies = { 0 };
 		loaded = 1;
 
-		memset(&not_strategies, 0, sizeof(struct cmdnames));
 		load_command_list("git-merge-", &main_cmds, &other_cmds);
 		for (i = 0; i < main_cmds.cnt; i++) {
 			int j, found = 0;
@@ -674,9 +673,8 @@ static int read_tree_trivial(struct object_id *common, struct object_id *head,
 	int i, nr_trees = 0;
 	struct tree *trees[MAX_UNPACK_TREES];
 	struct tree_desc t[MAX_UNPACK_TREES];
-	struct unpack_trees_options opts;
+	struct unpack_trees_options opts = { 0 };
 
-	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = 2;
 	opts.src_index = &the_index;
 	opts.dst_index = &the_index;
@@ -1126,9 +1124,8 @@ static struct commit_list *reduce_parents(struct commit *head_commit,
 
 static void prepare_merge_message(struct strbuf *merge_names, struct strbuf *merge_msg)
 {
-	struct fmt_merge_msg_opts opts;
+	struct fmt_merge_msg_opts opts = { 0 };
 
-	memset(&opts, 0, sizeof(opts));
 	opts.add_title = !have_message;
 	opts.shortlog_len = shortlog_len;
 	opts.credit_people = (0 < option_edit);

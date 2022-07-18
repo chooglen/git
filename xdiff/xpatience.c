@@ -314,9 +314,8 @@ static int walk_common_sequence(struct hashmap *map, struct entry *first,
 static int fall_back_to_classic_diff(struct hashmap *map,
 		int line1, int count1, int line2, int count2)
 {
-	xpparam_t xpp;
+	xpparam_t xpp = { 0 };
 
-	memset(&xpp, 0, sizeof(xpp));
 	xpp.flags = map->xpp->flags & ~XDF_DIFF_ALGORITHM_MASK;
 
 	return xdl_fall_back_diff(map->env, &xpp,
@@ -333,7 +332,7 @@ static int patience_diff(mmfile_t *file1, mmfile_t *file2,
 		xpparam_t const *xpp, xdfenv_t *env,
 		int line1, int count1, int line2, int count2)
 {
-	struct hashmap map;
+	struct hashmap map = { 0 };
 	struct entry *first;
 	int result = 0;
 
@@ -348,7 +347,6 @@ static int patience_diff(mmfile_t *file1, mmfile_t *file2,
 		return 0;
 	}
 
-	memset(&map, 0, sizeof(map));
 	if (fill_hashmap(file1, file2, xpp, env, &map,
 			line1, count1, line2, count2))
 		return -1;

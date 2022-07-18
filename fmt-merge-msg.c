@@ -641,14 +641,12 @@ int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 	struct object_id head_oid;
 	const char *current_branch;
 	void *current_branch_to_free;
-	struct merge_parents merge_parents;
+	struct merge_parents merge_parents = { 0 };
 
 	if (!suppress_dest_pattern_seen) {
 		string_list_append(&suppress_dest_patterns, "main");
 		string_list_append(&suppress_dest_patterns, "master");
 	}
-
-	memset(&merge_parents, 0, sizeof(merge_parents));
 
 	/* learn the commit that we merge into and the current branch name */
 	current_branch = current_branch_to_free =

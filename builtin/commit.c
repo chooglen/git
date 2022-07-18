@@ -305,7 +305,7 @@ static void add_remove_files(struct string_list *list)
 static void create_base_index(const struct commit *current_head)
 {
 	struct tree *tree;
-	struct unpack_trees_options opts;
+	struct unpack_trees_options opts = { 0 };
 	struct tree_desc t;
 
 	if (!current_head) {
@@ -313,7 +313,6 @@ static void create_base_index(const struct commit *current_head)
 		return;
 	}
 
-	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = 1;
 	opts.index_only = 1;
 	opts.merge = 1;

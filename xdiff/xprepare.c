@@ -259,9 +259,7 @@ static void xdl_free_ctx(xdfile_t *xdf) {
 int xdl_prepare_env(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 		    xdfenv_t *xe) {
 	long enl1, enl2, sample;
-	xdlclassifier_t cf;
-
-	memset(&cf, 0, sizeof(cf));
+	xdlclassifier_t cf = { 0 };
 
 	/*
 	 * For histogram diff, we can afford a smaller sample size and

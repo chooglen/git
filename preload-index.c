@@ -98,8 +98,8 @@ void preload_index(struct index_state *index,
 		   unsigned int refresh_flags)
 {
 	int threads, i, work, offset;
-	struct thread_data data[MAX_PARALLEL];
-	struct progress_data pd;
+	struct thread_data data[MAX_PARALLEL] = { 0 };
+	struct progress_data pd = { 0 };
 	int t2_sum_lstat = 0;
 
 	if (!HAVE_THREADS || !core_preload_index)
@@ -118,9 +118,6 @@ void preload_index(struct index_state *index,
 		threads = MAX_PARALLEL;
 	offset = 0;
 	work = DIV_ROUND_UP(index->cache_nr, threads);
-	memset(&data, 0, sizeof(data));
-
-	memset(&pd, 0, sizeof(pd));
 	if (refresh_flags & REFRESH_PROGRESS && isatty(2)) {
 		pd.progress = start_delayed_progress(_("Refreshing index"), index->cache_nr);
 		pthread_mutex_init(&pd.mutex, NULL);

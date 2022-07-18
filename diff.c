@@ -1749,7 +1749,7 @@ static void emit_rewrite_diff(const char *name_a,
 	const char *a_prefix, *b_prefix;
 	char *data_one, *data_two;
 	size_t size_one, size_two;
-	struct emit_callback ecbdata;
+	struct emit_callback ecbdata = { 0 };
 	struct strbuf out = STRBUF_INIT;
 
 	if (diff_mnemonic_prefix && o->flags.reverse_diff) {
@@ -1771,7 +1771,6 @@ static void emit_rewrite_diff(const char *name_a,
 	size_one = fill_textconv(o->repo, textconv_one, one, &data_one);
 	size_two = fill_textconv(o->repo, textconv_two, two, &data_two);
 
-	memset(&ecbdata, 0, sizeof(ecbdata));
 	ecbdata.color_diff = want_color(o->use_color);
 	ecbdata.ws_rule = whitespace_rule(o->repo->index, name_b);
 	ecbdata.opt = o;
@@ -2084,8 +2083,8 @@ static void diff_words_fill(struct diff_words_buffer *buffer, mmfile_t *out,
 /* this executes the word diff on the accumulated buffers */
 static void diff_words_show(struct diff_words_data *diff_words)
 {
-	xpparam_t xpp;
-	xdemitconf_t xecfg;
+	xpparam_t xpp = { 0 };
+	xdemitconf_t xecfg = { 0 };
 	mmfile_t minus, plus;
 	struct diff_words_style *style = diff_words->style;
 
@@ -2110,8 +2109,6 @@ static void diff_words_show(struct diff_words_data *diff_words)
 	diff_words->current_plus = diff_words->plus.text.ptr;
 	diff_words->last_minus = 0;
 
-	memset(&xpp, 0, sizeof(xpp));
-	memset(&xecfg, 0, sizeof(xecfg));
 	diff_words_fill(&diff_words->minus, &minus, diff_words->word_regex);
 	diff_words_fill(&diff_words->plus, &plus, diff_words->word_regex);
 	xpp.flags = 0;
@@ -2583,8 +2580,8 @@ static void print_stat_summary_inserts_deletes(struct diff_options *options,
 void print_stat_summary(FILE *fp, int files,
 			int insertions, int deletions)
 {
-	struct diff_options o;
-	memset(&o, 0, sizeof(o));
+	struct diff_options o = { 0 };
+
 	o.file = fp;
 
 	print_stat_summary_inserts_deletes(&o, files, insertions, deletions);
@@ -3553,9 +3550,9 @@ static void builtin_diff(const char *name_a,
 		/* Crazy xdl interfaces.. */
 		const char *diffopts;
 		const char *v;
-		xpparam_t xpp;
-		xdemitconf_t xecfg;
-		struct emit_callback ecbdata;
+		xpparam_t xpp = { 0 };
+		xdemitconf_t xecfg = { 0 };
+		struct emit_callback ecbdata = { 0 };
 		const struct userdiff_funcname *pe;
 
 		if (must_show_header) {
@@ -3571,9 +3568,6 @@ static void builtin_diff(const char *name_a,
 		if (!pe)
 			pe = diff_funcname_pattern(o, two);
 
-		memset(&xpp, 0, sizeof(xpp));
-		memset(&xecfg, 0, sizeof(xecfg));
-		memset(&ecbdata, 0, sizeof(ecbdata));
 		if (o->flags.suppress_diff_headers)
 			lbl[0] = NULL;
 		ecbdata.label_path = lbl;
@@ -3706,15 +3700,13 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 
 	else if (may_differ) {
 		/* Crazy xdl interfaces.. */
-		xpparam_t xpp;
-		xdemitconf_t xecfg;
+		xpparam_t xpp = { 0 };
+		xdemitconf_t xecfg = { 0 };
 
 		if (fill_mmfile(o->repo, &mf1, one) < 0 ||
 		    fill_mmfile(o->repo, &mf2, two) < 0)
 			die("unable to read files to diff");
 
-		memset(&xpp, 0, sizeof(xpp));
-		memset(&xecfg, 0, sizeof(xecfg));
 		xpp.flags = o->xdl_opts;
 		xpp.ignore_regex = o->ignore_regex;
 		xpp.ignore_regex_nr = o->ignore_regex_nr;
@@ -3760,12 +3752,11 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 			      struct diff_options *o)
 {
 	mmfile_t mf1, mf2;
-	struct checkdiff_t data;
+	struct checkdiff_t data = { 0 };
 
 	if (!two)
 		return;
 
-	memset(&data, 0, sizeof(data));
 	data.filename = name_b ? name_b : name_a;
 	data.lineno = 0;
 	data.o = o;
@@ -3786,11 +3777,9 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 		goto free_and_return;
 	else {
 		/* Crazy xdl interfaces.. */
-		xpparam_t xpp;
-		xdemitconf_t xecfg;
+		xpparam_t xpp = { 0 };
+		xdemitconf_t xecfg = { 0 };
 
-		memset(&xpp, 0, sizeof(xpp));
-		memset(&xecfg, 0, sizeof(xecfg));
 		xecfg.ctxlen = 1; /* at least one context line */
 		xpp.flags = 0;
 		if (xdi_diff_outf(&mf1, &mf2, checkdiff_consume_hunk,
@@ -6179,22 +6168,19 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 	struct diff_queue_struct *q = &diff_queued_diff;
 	int i;
 	git_hash_ctx ctx;
-	struct patch_id_t data;
+	struct patch_id_t data = { 0 };
 
 	the_hash_algo->init_fn(&ctx);
-	memset(&data, 0, sizeof(struct patch_id_t));
 	data.ctx = &ctx;
 	oidclr(oid);
 
 	for (i = 0; i < q->nr; i++) {
-		xpparam_t xpp;
-		xdemitconf_t xecfg;
+		xpparam_t xpp = { 0 };
+		xdemitconf_t xecfg = { 0 };
 		mmfile_t mf1, mf2;
 		struct diff_filepair *p = q->queue[i];
 		int len1, len2;
 
-		memset(&xpp, 0, sizeof(xpp));
-		memset(&xecfg, 0, sizeof(xecfg));
 		if (p->status == 0)
 			return error("internal diff status error");
 		if (p->status == DIFF_STATUS_UNKNOWN)

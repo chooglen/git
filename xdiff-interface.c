@@ -133,14 +133,12 @@ int xdi_diff_outf(mmfile_t *mf1, mmfile_t *mf2,
 		  xpparam_t const *xpp, xdemitconf_t const *xecfg)
 {
 	int ret;
-	struct xdiff_emit_state state;
-	xdemitcb_t ecb;
+	struct xdiff_emit_state state = { 0 };
+	xdemitcb_t ecb = { 0 };
 
-	memset(&state, 0, sizeof(state));
 	state.hunk_fn = hunk_fn;
 	state.line_fn = line_fn;
 	state.consume_callback_data = consume_callback_data;
-	memset(&ecb, 0, sizeof(ecb));
 	if (hunk_fn)
 		ecb.out_hunk = xdiff_out_hunk;
 	ecb.out_line = xdiff_outf;

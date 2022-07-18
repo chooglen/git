@@ -145,11 +145,10 @@ static void display_table(const struct string_list *list,
 			  unsigned int colopts,
 			  const struct column_options *opts)
 {
-	struct column_data data;
+	struct column_data data = { 0 };
 	int x, y, i, initial_width;
 	char *empty_cell;
 
-	memset(&data, 0, sizeof(data));
 	data.list = list;
 	data.colopts = colopts;
 	data.opts = *opts;
@@ -179,13 +178,12 @@ static void display_table(const struct string_list *list,
 void print_columns(const struct string_list *list, unsigned int colopts,
 		   const struct column_options *opts)
 {
-	struct column_options nopts;
+	struct column_options nopts = { 0 };
 
 	if (!list->nr)
 		return;
 	assert((colopts & COL_ENABLE_MASK) != COL_AUTO);
 
-	memset(&nopts, 0, sizeof(nopts));
 	nopts.indent = opts && opts->indent ? opts->indent : "";
 	nopts.nl = opts && opts->nl ? opts->nl : "\n";
 	nopts.padding = opts ? opts->padding : 1;

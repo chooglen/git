@@ -104,7 +104,7 @@ static enum ll_merge_result ll_xdl_merge(const struct ll_merge_driver *drv_unuse
 			int marker_size)
 {
 	enum ll_merge_result ret;
-	xmparam_t xmp;
+	xmparam_t xmp = { 0 };
 	int status;
 	assert(opts);
 
@@ -122,7 +122,6 @@ static enum ll_merge_result ll_xdl_merge(const struct ll_merge_driver *drv_unuse
 				       opts, marker_size);
 	}
 
-	memset(&xmp, 0, sizeof(xmp));
 	xmp.level = XDL_MERGE_ZEALOUS;
 	xmp.favor = opts->variant;
 	xmp.xpp.flags = opts->xdl_opts;

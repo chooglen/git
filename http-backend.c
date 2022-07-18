@@ -369,7 +369,7 @@ static ssize_t read_request(int fd, unsigned char **out, ssize_t req_len)
 
 static void inflate_request(const char *prog_name, int out, int buffer_input, ssize_t req_len)
 {
-	git_zstream stream;
+	git_zstream stream = { 0 };
 	unsigned char *full_request = NULL;
 	unsigned char in_buf[8192];
 	unsigned char out_buf[8192];
@@ -377,7 +377,6 @@ static void inflate_request(const char *prog_name, int out, int buffer_input, ss
 	int req_len_defined = req_len >= 0;
 	size_t req_remaining_len = req_len;
 
-	memset(&stream, 0, sizeof(stream));
 	git_inflate_init_gzip_only(&stream);
 
 	while (1) {

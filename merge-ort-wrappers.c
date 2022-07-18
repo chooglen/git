@@ -24,7 +24,7 @@ int merge_ort_nonrecursive(struct merge_options *opt,
 			   struct tree *merge,
 			   struct tree *merge_base)
 {
-	struct merge_result result;
+	struct merge_result result = { 0 };
 
 	if (unclean(opt, head))
 		return -1;
@@ -34,7 +34,6 @@ int merge_ort_nonrecursive(struct merge_options *opt,
 		return 1;
 	}
 
-	memset(&result, 0, sizeof(result));
 	merge_incore_nonrecursive(opt, merge_base, head, merge, &result);
 	merge_switch_to_result(opt, head, &result, 1, 1);
 
@@ -48,12 +47,11 @@ int merge_ort_recursive(struct merge_options *opt,
 			struct commit **result)
 {
 	struct tree *head = repo_get_commit_tree(opt->repo, side1);
-	struct merge_result tmp;
+	struct merge_result tmp = { 0 };
 
 	if (unclean(opt, head))
 		return -1;
 
-	memset(&tmp, 0, sizeof(tmp));
 	merge_incore_recursive(opt, merge_bases, side1, side2, &tmp);
 	merge_switch_to_result(opt, head, &tmp, 1, 1);
 	*result = NULL;

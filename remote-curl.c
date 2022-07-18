@@ -452,7 +452,7 @@ static struct discovery *discover_refs(const char *service, int for_push)
 	struct string_list extra_headers = STRING_LIST_INIT_DUP;
 	struct discovery *last = last_discovery;
 	int http_ret, maybe_smart = 0;
-	struct http_get_options http_options;
+	struct http_get_options http_options = { 0 };
 	enum protocol_version version = get_protocol_version_config();
 
 	if (last && !strcmp(service, last->service))
@@ -482,7 +482,6 @@ static struct discovery *discover_refs(const char *service, int for_push)
 	if (get_protocol_http_header(version, &protocol_header))
 		string_list_append(&extra_headers, protocol_header.buf);
 
-	memset(&http_options, 0, sizeof(http_options));
 	http_options.content_type = &type;
 	http_options.charset = &charset;
 	http_options.effective_url = &effective_url;
@@ -1153,7 +1152,7 @@ static int fetch_dumb(int nr_heads, struct ref **to_fetch)
 static int fetch_git(struct discovery *heads,
 	int nr_heads, struct ref **to_fetch)
 {
-	struct rpc_state rpc;
+	struct rpc_state rpc = { 0 };
 	struct strbuf preamble = STRBUF_INIT;
 	int i, err;
 	struct strvec args = STRVEC_INIT;
@@ -1201,7 +1200,6 @@ static int fetch_git(struct discovery *heads,
 	}
 	packet_buf_flush(&preamble);
 
-	memset(&rpc, 0, sizeof(rpc));
 	rpc.service_name = "git-upload-pack",
 	rpc.gzip_request = 1;
 
@@ -1299,7 +1297,7 @@ static int push_dav(int nr_spec, const char **specs)
 
 static int push_git(struct discovery *heads, int nr_spec, const char **specs)
 {
-	struct rpc_state rpc;
+	struct rpc_state rpc = { 0 };
 	int i, err;
 	struct strvec args;
 	struct string_list_item *cas_option;
@@ -1340,7 +1338,6 @@ static int push_git(struct discovery *heads, int nr_spec, const char **specs)
 		packet_buf_write(&preamble, "%s\n", specs[i]);
 	packet_buf_flush(&preamble);
 
-	memset(&rpc, 0, sizeof(rpc));
 	rpc.service_name = "git-receive-pack",
 
 	err = rpc_service(&rpc, heads, args.v, &preamble, &rpc_result);

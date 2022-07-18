@@ -1024,9 +1024,8 @@ static struct imap_store *imap_open_store(struct imap_server_conf *srvc, const c
 		freeaddrinfo(ai0);
 #else /* NO_IPV6 */
 		struct hostent *he;
-		struct sockaddr_in addr;
+		struct sockaddr_in addr = { 0 };
 
-		memset(&addr, 0, sizeof(addr));
 		addr.sin_port = htons(srvc->port);
 		addr.sin_family = AF_INET;
 
@@ -1215,12 +1214,11 @@ static void lf_to_crlf(struct strbuf *msg)
 static int imap_store_msg(struct imap_store *ctx, struct strbuf *msg)
 {
 	struct imap *imap = ctx->imap;
-	struct imap_cmd_cb cb;
+	struct imap_cmd_cb cb = { 0 };
 	const char *prefix, *box;
 	int ret;
 
 	lf_to_crlf(msg);
-	memset(&cb, 0, sizeof(cb));
 
 	cb.dlen = msg->len;
 	cb.data = strbuf_detach(msg, NULL);

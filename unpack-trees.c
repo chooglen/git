@@ -2196,7 +2196,7 @@ static int verify_clean_subdirectory(const struct cache_entry *ce,
 	 */
 	int namelen;
 	int i;
-	struct dir_struct d;
+	struct dir_struct d = { 0 };
 	char *pathbuf;
 	int cnt = 0;
 
@@ -2244,7 +2244,6 @@ static int verify_clean_subdirectory(const struct cache_entry *ce,
 	/* Do not lose a locally present file that is not ignored. */
 	pathbuf = xstrfmt("%.*s/", namelen, ce->name);
 
-	memset(&d, 0, sizeof(d));
 	if (o->dir)
 		d.exclude_per_dir = o->dir->exclude_per_dir;
 	i = read_directory(&d, o->src_index, pathbuf, namelen+1, NULL);

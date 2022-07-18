@@ -358,7 +358,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	struct hashmap symlinks2 = HASHMAP_INIT(pair_cmp, NULL);
 	struct hashmap_iter iter;
 	struct pair_entry *entry;
-	struct index_state wtindex;
+	struct index_state wtindex = { 0 };
 	struct checkout lstate, rstate;
 	int flags = RUN_GIT_CMD, err = 0;
 	const char *helper_argv[] = { "difftool--helper", NULL, NULL, NULL };
@@ -383,8 +383,6 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 		strbuf_addch(&wtdir, '/');
 	mkdir(ldir.buf, 0700);
 	mkdir(rdir.buf, 0700);
-
-	memset(&wtindex, 0, sizeof(wtindex));
 
 	memset(&lstate, 0, sizeof(lstate));
 	lstate.base_dir = lbase_dir = xstrdup(ldir.buf);

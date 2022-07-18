@@ -1656,10 +1656,9 @@ int write_commit_graph_reachable(struct object_directory *odb,
 				 const struct commit_graph_opts *opts)
 {
 	struct oidset commits = OIDSET_INIT;
-	struct refs_cb_data data;
+	struct refs_cb_data data = { 0 };
 	int result;
 
-	memset(&data, 0, sizeof(data));
 	data.commits = &commits;
 	if (flags & COMMIT_GRAPH_WRITE_PROGRESS)
 		data.progress = start_delayed_progress(

@@ -205,7 +205,7 @@ void exclude_cmds(struct cmdnames *cmds, struct cmdnames *excludes)
 static void pretty_print_cmdnames(struct cmdnames *cmds, unsigned int colopts)
 {
 	struct string_list list = STRING_LIST_INIT_NODUP;
-	struct column_options copts;
+	struct column_options copts = { 0 };
 	int i;
 
 	for (i = 0; i < cmds->cnt; i++)
@@ -215,7 +215,6 @@ static void pretty_print_cmdnames(struct cmdnames *cmds, unsigned int colopts)
 	 * about layout strategy and stuff
 	 */
 	colopts = (colopts & ~COL_ENABLE_MASK) | COL_ENABLED;
-	memset(&copts, 0, sizeof(copts));
 	copts.indent = "  ";
 	copts.padding = 2;
 	print_columns(&list, colopts, &copts);

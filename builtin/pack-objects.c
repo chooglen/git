@@ -384,11 +384,10 @@ static int check_pack_inflate(struct packed_git *p,
 		off_t len,
 		unsigned long expect)
 {
-	git_zstream stream;
+	git_zstream stream = { 0 };
 	unsigned char fakebuf[4096], *in;
 	int st;
 
-	memset(&stream, 0, sizeof(stream));
 	git_inflate_init(&stream);
 	do {
 		in = use_pack(p, w_curs, offset, &stream.avail_in);

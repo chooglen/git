@@ -361,7 +361,7 @@ void expand_index(struct index_state *istate, struct pattern_list *pl)
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce = istate->cache[i];
 		struct tree *tree;
-		struct pathspec ps;
+		struct pathspec ps = { 0 };
 		int dtype;
 
 		if (!S_ISSPARSEDIR(ce->ce_mode)) {
@@ -385,7 +385,6 @@ void expand_index(struct index_state *istate, struct pattern_list *pl)
 		/* recursively walk into cd->name */
 		tree = lookup_tree(istate->repo, &ce->oid);
 
-		memset(&ps, 0, sizeof(ps));
 		ps.recursive = 1;
 		ps.has_wildcard = 1;
 		ps.max_depth = -1;

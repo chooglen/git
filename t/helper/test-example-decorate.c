@@ -5,7 +5,7 @@
 
 int cmd__example_decorate(int argc, const char **argv)
 {
-	struct decoration n;
+	struct decoration n = { 0 };
 	struct object_id one_oid = { {1} };
 	struct object_id two_oid = { {2} };
 	struct object_id three_oid = { {3} };
@@ -16,11 +16,6 @@ int cmd__example_decorate(int argc, const char **argv)
 	void *ret;
 
 	int i, objects_noticed = 0;
-
-	/*
-	 * The struct must be zero-initialized.
-	 */
-	memset(&n, 0, sizeof(n));
 
 	/*
 	 * Add 2 objects, one with a non-NULL decoration and one with a NULL

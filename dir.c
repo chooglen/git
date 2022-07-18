@@ -2648,7 +2648,7 @@ static int treat_leading_path(struct dir_struct *dir,
 	struct strbuf subdir = STRBUF_INIT;
 	int prevlen, baselen;
 	const char *cp;
-	struct cached_dir cdir;
+	struct cached_dir cdir = { 0 };
 	enum path_treatment state = path_none;
 
 	/*
@@ -2673,7 +2673,6 @@ static int treat_leading_path(struct dir_struct *dir,
 	if (!len)
 		return 1;
 
-	memset(&cdir, 0, sizeof(cdir));
 	cdir.d_type = DT_DIR;
 	baselen = 0;
 	prevlen = 0;

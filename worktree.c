@@ -368,10 +368,9 @@ void update_worktree_location(struct worktree *wt, const char *path_)
 int is_worktree_being_rebased(const struct worktree *wt,
 			      const char *target)
 {
-	struct wt_status_state state;
+	struct wt_status_state state = { 0 };
 	int found_rebase;
 
-	memset(&state, 0, sizeof(state));
 	found_rebase = wt_status_check_rebase(wt, &state) &&
 		       (state.rebase_in_progress ||
 			state.rebase_interactive_in_progress) &&
@@ -385,10 +384,9 @@ int is_worktree_being_rebased(const struct worktree *wt,
 int is_worktree_being_bisected(const struct worktree *wt,
 			       const char *target)
 {
-	struct wt_status_state state;
+	struct wt_status_state state = { 0 };
 	int found_bisect;
 
-	memset(&state, 0, sizeof(state));
 	found_bisect = wt_status_check_bisect(wt, &state) &&
 		       state.branch &&
 		       skip_prefix(target, "refs/heads/", &target) &&

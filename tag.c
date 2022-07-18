@@ -12,12 +12,10 @@ const char *tag_type = "tag";
 
 static int run_gpg_verify(const char *buf, unsigned long size, unsigned flags)
 {
-	struct signature_check sigc;
+	struct signature_check sigc = { 0 };
 	struct strbuf payload = STRBUF_INIT;
 	struct strbuf signature = STRBUF_INIT;
 	int ret;
-
-	memset(&sigc, 0, sizeof(sigc));
 
 	if (!parse_signature(buf, size, &payload, &signature)) {
 		if (flags & GPG_VERIFY_VERBOSE)

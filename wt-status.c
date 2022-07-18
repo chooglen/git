@@ -622,10 +622,9 @@ static void wt_status_collect_changes_worktree(struct wt_status *s)
 static void wt_status_collect_changes_index(struct wt_status *s)
 {
 	struct rev_info rev;
-	struct setup_revision_opt opt;
+	struct setup_revision_opt opt = { 0 };
 
 	repo_init_revisions(s->repo, &rev, NULL);
-	memset(&opt, 0, sizeof(opt));
 	opt.def = s->is_initial ? empty_tree_oid_hex() : s->reference;
 	setup_revisions(0, NULL, &rev, &opt);
 
@@ -1027,7 +1026,7 @@ static void wt_longstatus_print_other(struct wt_status *s,
 	int i;
 	struct strbuf buf = STRBUF_INIT;
 	static struct string_list output = STRING_LIST_INIT_DUP;
-	struct column_options copts;
+	struct column_options copts = { 0 };
 
 	if (!l->nr)
 		return;
@@ -1056,7 +1055,6 @@ static void wt_longstatus_print_other(struct wt_status *s,
 		    color(WT_STATUS_HEADER, s),
 		    s->display_comment_prefix ? "#" : "",
 		    color(WT_STATUS_UNTRACKED, s));
-	memset(&copts, 0, sizeof(copts));
 	copts.padding = 1;
 	copts.indent = buf.buf;
 	if (want_color(s->use_color))
@@ -1102,7 +1100,7 @@ void wt_status_add_cut_line(FILE *fp)
 static void wt_longstatus_print_verbose(struct wt_status *s)
 {
 	struct rev_info rev;
-	struct setup_revision_opt opt;
+	struct setup_revision_opt opt = { 0 };
 	int dirty_submodules;
 	const char *c = color(WT_STATUS_HEADER, s);
 
@@ -1110,7 +1108,6 @@ static void wt_longstatus_print_verbose(struct wt_status *s)
 	rev.diffopt.flags.allow_textconv = 1;
 	rev.diffopt.ita_invisible_in_index = 1;
 
-	memset(&opt, 0, sizeof(opt));
 	opt.def = s->is_initial ? empty_tree_oid_hex() : s->reference;
 	setup_revisions(0, NULL, &rev, &opt);
 

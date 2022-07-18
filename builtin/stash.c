@@ -233,7 +233,7 @@ static int clear_stash(int argc, const char **argv, const char *prefix)
 static int reset_tree(struct object_id *i_tree, int update, int reset)
 {
 	int nr_trees = 1;
-	struct unpack_trees_options opts;
+	struct unpack_trees_options opts = { 0 };
 	struct tree_desc t[MAX_UNPACK_TREES];
 	struct tree *tree;
 	struct lock_file lock_file = LOCK_INIT;
@@ -243,8 +243,6 @@ static int reset_tree(struct object_id *i_tree, int update, int reset)
 		return -1;
 
 	hold_locked_index(&lock_file, LOCK_DIE_ON_ERROR);
-
-	memset(&opts, 0, sizeof(opts));
 
 	tree = parse_tree_indirect(i_tree);
 	if (parse_tree(tree))
@@ -1438,12 +1436,11 @@ static int create_stash(int argc, const char **argv, const char *prefix)
 	int ret;
 	struct strbuf stash_msg_buf = STRBUF_INIT;
 	struct stash_info info = STASH_INFO_INIT;
-	struct pathspec ps;
+	struct pathspec ps = { 0 };
 
 	/* Starting with argv[1], since argv[0] is "create" */
 	strbuf_join_argv(&stash_msg_buf, argc - 1, ++argv, ' ');
 
-	memset(&ps, 0, sizeof(ps));
 	if (!check_changes_tracked_files(&ps))
 		return 0;
 
@@ -1748,7 +1745,7 @@ static int save_stash(int argc, const char **argv, const char *prefix)
 	int quiet = 0;
 	int ret = 0;
 	const char *stash_msg = NULL;
-	struct pathspec ps;
+	struct pathspec ps = { 0 };
 	struct strbuf stash_msg_buf = STRBUF_INIT;
 	struct option options[] = {
 		OPT_BOOL('k', "keep-index", &keep_index,
@@ -1774,7 +1771,6 @@ static int save_stash(int argc, const char **argv, const char *prefix)
 	if (argc)
 		stash_msg = strbuf_join_argv(&stash_msg_buf, argc, argv, ' ');
 
-	memset(&ps, 0, sizeof(ps));
 	ret = do_push_stash(&ps, stash_msg, quiet, keep_index,
 			    patch_mode, include_untracked, only_staged);
 

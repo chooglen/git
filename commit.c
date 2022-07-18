@@ -975,7 +975,7 @@ static int collect_one_reflog_ent(struct object_id *ooid, struct object_id *noid
 struct commit *get_fork_point(const char *refname, struct commit *commit)
 {
 	struct object_id oid;
-	struct rev_collect revs;
+	struct rev_collect revs = { 0 };
 	struct commit_list *bases;
 	int i;
 	struct commit *ret = NULL;
@@ -990,7 +990,6 @@ struct commit *get_fork_point(const char *refname, struct commit *commit)
 		die("Ambiguous refname: '%s'", refname);
 	}
 
-	memset(&revs, 0, sizeof(revs));
 	revs.initial = 1;
 	for_each_reflog_ent(full_refname, collect_one_reflog_ent, &revs);
 
@@ -1250,9 +1249,8 @@ void verify_merge_signature(struct commit *commit, int verbosity,
 			    int check_trust)
 {
 	char hex[GIT_MAX_HEXSZ + 1];
-	struct signature_check signature_check;
+	struct signature_check signature_check = { 0 };
 	int ret;
-	memset(&signature_check, 0, sizeof(signature_check));
 
 	ret = check_commit_signature(commit, &signature_check);
 

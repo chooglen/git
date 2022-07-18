@@ -99,10 +99,8 @@ static void use(int bytes)
 
 static void *get_data(unsigned long size)
 {
-	git_zstream stream;
+	git_zstream stream = { 0 };
 	void *buf = xmallocz(size);
-
-	memset(&stream, 0, sizeof(stream));
 
 	stream.next_out = buf;
 	stream.avail_out = size;

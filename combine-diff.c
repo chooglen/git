@@ -430,10 +430,10 @@ static void combine_diff(struct repository *r,
 {
 	unsigned int p_lno, lno;
 	unsigned long nmask = (1UL << n);
-	xpparam_t xpp;
-	xdemitconf_t xecfg;
+	xpparam_t xpp = { 0 };
+	xdemitconf_t xecfg = { 0 };
 	mmfile_t parent_file;
-	struct combine_diff_state state;
+	struct combine_diff_state state = { 0 };
 	unsigned long sz;
 
 	if (result_deleted)
@@ -441,10 +441,7 @@ static void combine_diff(struct repository *r,
 
 	parent_file.ptr = grab_blob(r, parent, mode, &sz, textconv, path);
 	parent_file.size = sz;
-	memset(&xpp, 0, sizeof(xpp));
 	xpp.flags = flags;
-	memset(&xecfg, 0, sizeof(xecfg));
-	memset(&state, 0, sizeof(state));
 	state.nmask = nmask;
 	state.sline = sline;
 	state.lno = 1;

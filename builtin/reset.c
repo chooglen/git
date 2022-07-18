@@ -52,10 +52,9 @@ static int reset_index(const char *ref, const struct object_id *oid, int reset_t
 	int i, nr = 0;
 	struct tree_desc desc[2];
 	struct tree *tree;
-	struct unpack_trees_options opts;
+	struct unpack_trees_options opts = { 0 };
 	int ret = -1;
 
-	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = 1;
 	opts.src_index = &the_index;
 	opts.dst_index = &the_index;
@@ -260,9 +259,8 @@ static int read_from_tree(const struct pathspec *pathspec,
 			  struct object_id *tree_oid,
 			  int intent_to_add)
 {
-	struct diff_options opt;
+	struct diff_options opt = { 0 };
 
-	memset(&opt, 0, sizeof(opt));
 	copy_pathspec(&opt.pathspec, pathspec);
 	opt.output_format = DIFF_FORMAT_CALLBACK;
 	opt.format_callback = update_index_from_diff;

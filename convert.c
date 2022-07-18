@@ -695,10 +695,9 @@ static int apply_single_file_filter(const char *path, const char *src, size_t le
 	 */
 	int err = 0;
 	struct strbuf nbuf = STRBUF_INIT;
-	struct async async;
+	struct async async = { 0 };
 	struct filter_params params;
 
-	memset(&async, 0, sizeof(async));
 	async.proc = filter_buffer_or_fd;
 	async.data = &params;
 	async.out = -1;

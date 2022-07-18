@@ -26,8 +26,8 @@ static int outf(void *dummy, mmbuffer_t *ptr, int nbuf)
 static int diff_two(const char *file1, const char *label1,
 		const char *file2, const char *label2)
 {
-	xpparam_t xpp;
-	xdemitconf_t xecfg;
+	xpparam_t xpp = { 0 };
+	xdemitconf_t xecfg = { 0 };
 	xdemitcb_t ecb = { .out_line = outf };
 	mmfile_t minus, plus;
 	int ret;
@@ -37,9 +37,7 @@ static int diff_two(const char *file1, const char *label1,
 
 	printf("--- a/%s\n+++ b/%s\n", label1, label2);
 	fflush(stdout);
-	memset(&xpp, 0, sizeof(xpp));
 	xpp.flags = 0;
-	memset(&xecfg, 0, sizeof(xecfg));
 	xecfg.ctxlen = 3;
 	ret = xdi_diff(&minus, &plus, &xpp, &xecfg, &ecb);
 

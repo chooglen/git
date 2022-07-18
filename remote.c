@@ -1003,9 +1003,8 @@ int query_refspecs(struct refspec *rs, struct refspec_item *query)
 
 char *apply_refspecs(struct refspec *rs, const char *name)
 {
-	struct refspec_item query;
+	struct refspec_item query = { 0 };
 
-	memset(&query, 0, sizeof(struct refspec_item));
 	query.src = (char *)name;
 
 	if (query_refspecs(rs, &query))
@@ -1465,13 +1464,13 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 	struct string_list src_tag = STRING_LIST_INIT_NODUP;
 	struct string_list_item *item;
 	struct ref *ref;
-	struct tips sent_tips;
+	struct tips sent_tips = { 0 };
 
 	/*
 	 * Collect everything we know they would have at the end of
 	 * this push, and collect all tags they have.
 	 */
-	memset(&sent_tips, 0, sizeof(sent_tips));
+
 	for (ref = *dst; ref; ref = ref->next) {
 		if (ref->peer_ref &&
 		    !is_null_oid(&ref->peer_ref->new_oid))
@@ -2424,9 +2423,8 @@ static int get_stale_heads_cb(const char *refname, const struct object_id *oid,
 {
 	struct stale_heads_info *info = cb_data;
 	struct string_list matches = STRING_LIST_INIT_DUP;
-	struct refspec_item query;
+	struct refspec_item query = { 0 };
 	int i, stale = 1;
-	memset(&query, 0, sizeof(struct refspec_item));
 	query.dst = (char *)refname;
 
 	query_refspecs_multiple(info->rs, &query, &matches);

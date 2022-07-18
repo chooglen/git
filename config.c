@@ -698,9 +698,8 @@ int git_config_from_parameters(config_fn_t fn, void *data)
 	struct strvec to_free = STRVEC_INIT;
 	int ret = 0;
 	char *envw = NULL;
-	struct config_source source;
+	struct config_source source = { 0 };
 
-	memset(&source, 0, sizeof(source));
 	source.prev = cf;
 	source.origin_type = CONFIG_ORIGIN_CMDLINE;
 	cf = &source;
@@ -3159,9 +3158,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 	char *filename_buf = NULL;
 	char *contents = NULL;
 	size_t contents_sz;
-	struct config_store_data store;
-
-	memset(&store, 0, sizeof(store));
+	struct config_store_data store = { 0 };
 
 	/* parse-key returns negative; flip the sign to feed exit(3) */
 	ret = 0 - git_config_parse_key(key, &store.key, &store.baselen);
@@ -3209,7 +3206,7 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 		struct stat st;
 		size_t copy_begin, copy_end;
 		int i, new_line = 0;
-		struct config_options opts;
+		struct config_options opts = { 0 };
 
 		if (!value_pattern)
 			store.value_pattern = NULL;
@@ -3237,7 +3234,6 @@ int git_config_set_multivar_in_file_gently(const char *config_filename,
 		ALLOC_GROW(store.parsed, 1, store.parsed_alloc);
 		store.parsed[0].end = 0;
 
-		memset(&opts, 0, sizeof(opts));
 		opts.event_fn = store_aux_event;
 		opts.event_fn_data = &store;
 
@@ -3506,9 +3502,7 @@ static int git_config_copy_or_rename_section_in_file(const char *config_filename
 	FILE *config_file = NULL;
 	struct stat st;
 	struct strbuf copystr = STRBUF_INIT;
-	struct config_store_data store;
-
-	memset(&store, 0, sizeof(store));
+	struct config_store_data store = { 0 };
 
 	if (new_name && !section_name_is_ok(new_name)) {
 		ret = error(_("invalid section name: %s"), new_name);

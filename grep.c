@@ -1502,7 +1502,7 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 	int show_function = 0;
 	struct userdiff_driver *textconv = NULL;
 	enum grep_context ctx = GREP_CONTEXT_HEAD;
-	xdemitconf_t xecfg;
+	xdemitconf_t xecfg = { 0 };
 
 	if (!opt->status_only && gs->name == NULL)
 		BUG("grep call which could print a name requires "
@@ -1563,7 +1563,6 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 		}
 	}
 
-	memset(&xecfg, 0, sizeof(xecfg));
 	opt->priv = &xecfg;
 
 	try_lookahead = should_lookahead(opt);

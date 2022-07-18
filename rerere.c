@@ -453,10 +453,9 @@ static int handle_file(struct index_state *istate,
 		       const char *path, unsigned char *hash, const char *output)
 {
 	int has_conflicts = 0;
-	struct rerere_io_file io;
+	struct rerere_io_file io = { 0 };
 	int marker_size = ll_merge_marker_size(istate, path);
 
-	memset(&io, 0, sizeof(io));
 	io.io.getline = rerere_file_getline;
 	io.input = fopen(path, "r");
 	io.io.wrerror = 0;
@@ -944,7 +943,7 @@ static int handle_cache(struct index_state *istate,
 	mmbuffer_t result = {NULL, 0};
 	const struct cache_entry *ce;
 	int pos, len, i, has_conflicts;
-	struct rerere_io_mem io;
+	struct rerere_io_mem io = { 0 };
 	int marker_size = ll_merge_marker_size(istate, path);
 
 	/*
@@ -985,7 +984,6 @@ static int handle_cache(struct index_state *istate,
 	for (i = 0; i < 3; i++)
 		free(mmfile[i].ptr);
 
-	memset(&io, 0, sizeof(io));
 	io.io.getline = rerere_mem_getline;
 	if (output)
 		io.io.output = fopen(output, "w");

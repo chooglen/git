@@ -1521,8 +1521,7 @@ static void clear_midx_file_ext(const char *full_path, size_t full_path_len,
 static void clear_midx_files_ext(const char *object_dir, const char *ext,
 				 unsigned char *keep_hash)
 {
-	struct clear_midx_data data;
-	memset(&data, 0, sizeof(struct clear_midx_data));
+	struct clear_midx_data data = { 0 };
 
 	if (keep_hash)
 		data.keep = xstrfmt("multi-pack-index-%s%s",

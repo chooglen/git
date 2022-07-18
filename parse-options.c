@@ -866,13 +866,12 @@ int parse_options(int argc, const char **argv,
 		  const char * const usagestr[],
 		  enum parse_opt_flags flags)
 {
-	struct parse_opt_ctx_t ctx;
+	struct parse_opt_ctx_t ctx = { 0 };
 	struct option *real_options;
 
 	disallow_abbreviated_options =
 		git_env_bool("GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS", 0);
 
-	memset(&ctx, 0, sizeof(ctx));
 	real_options = preprocess_options(&ctx, options);
 	if (real_options)
 		options = real_options;

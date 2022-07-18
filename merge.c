@@ -49,9 +49,9 @@ int checkout_fast_forward(struct repository *r,
 			  const struct object_id *remote,
 			  int overwrite_ignore)
 {
-	struct tree *trees[MAX_UNPACK_TREES];
-	struct unpack_trees_options opts;
-	struct tree_desc t[MAX_UNPACK_TREES];
+	struct tree *trees[MAX_UNPACK_TREES] = { 0 };
+	struct unpack_trees_options opts = { 0 };
+	struct tree_desc t[MAX_UNPACK_TREES] = { 0 };
 	int i, nr_trees = 0;
 	struct lock_file lock_file = LOCK_INIT;
 
@@ -59,9 +59,6 @@ int checkout_fast_forward(struct repository *r,
 
 	if (repo_hold_locked_index(r, &lock_file, LOCK_REPORT_ON_ERROR) < 0)
 		return -1;
-
-	memset(&trees, 0, sizeof(trees));
-	memset(&t, 0, sizeof(t));
 
 	trees[nr_trees] = parse_tree_indirect(head);
 	if (!trees[nr_trees++]) {
@@ -78,7 +75,6 @@ int checkout_fast_forward(struct repository *r,
 		init_tree_desc(t+i, trees[i]->buffer, trees[i]->size);
 	}
 
-	memset(&opts, 0, sizeof(opts));
 	opts.preserve_ignored = !overwrite_ignore;
 
 	opts.head_idx = 1;

@@ -53,7 +53,7 @@ static int sparse_checkout_list(int argc, const char **argv)
 	static struct option builtin_sparse_checkout_list_options[] = {
 		OPT_END(),
 	};
-	struct pattern_list pl;
+	struct pattern_list pl = { 0 };
 	char *sparse_filename;
 	int res;
 
@@ -63,8 +63,6 @@ static int sparse_checkout_list(int argc, const char **argv)
 	argc = parse_options(argc, argv, NULL,
 			     builtin_sparse_checkout_list_options,
 			     builtin_sparse_checkout_list_usage, 0);
-
-	memset(&pl, 0, sizeof(pl));
 
 	pl.use_cone_patterns = core_sparse_checkout_cone;
 
@@ -201,7 +199,7 @@ static void clean_tracked_sparse_directories(struct repository *r)
 static int update_working_directory(struct pattern_list *pl)
 {
 	enum update_sparsity_result result;
-	struct unpack_trees_options o;
+	struct unpack_trees_options o = { 0 };
 	struct lock_file lock_file = LOCK_INIT;
 	struct repository *r = the_repository;
 
@@ -211,7 +209,6 @@ static int update_working_directory(struct pattern_list *pl)
 
 	r->index->sparse_checkout_patterns = pl;
 
-	memset(&o, 0, sizeof(o));
 	o.verbose_update = isatty(2);
 	o.update = 1;
 	o.head_idx = -1;
@@ -433,7 +430,7 @@ static struct sparse_checkout_init_opts {
 
 static int sparse_checkout_init(int argc, const char **argv)
 {
-	struct pattern_list pl;
+	struct pattern_list pl = { 0 };
 	char *sparse_filename;
 	int res;
 	struct object_id oid;
@@ -458,8 +455,6 @@ static int sparse_checkout_init(int argc, const char **argv)
 
 	if (update_modes(&init_opts.cone_mode, &init_opts.sparse_index))
 		return 1;
-
-	memset(&pl, 0, sizeof(pl));
 
 	sparse_filename = get_sparse_checkout_filename();
 	res = add_patterns_from_file_to_list(sparse_filename, "", 0, &pl, NULL, 0);
@@ -605,12 +600,11 @@ static void add_patterns_cone_mode(int argc, const char **argv,
 	struct strbuf buffer = STRBUF_INIT;
 	struct pattern_entry *pe;
 	struct hashmap_iter iter;
-	struct pattern_list existing;
+	struct pattern_list existing = { 0 };
 	char *sparse_filename = get_sparse_checkout_filename();
 
 	add_patterns_from_input(pl, argc, argv, use_stdin);
 
-	memset(&existing, 0, sizeof(existing));
 	existing.use_cone_patterns = core_sparse_checkout_cone;
 
 	if (add_patterns_from_file_to_list(sparse_filename, "", 0,
@@ -881,7 +875,7 @@ static int sparse_checkout_disable(int argc, const char **argv)
 	static struct option builtin_sparse_checkout_disable_options[] = {
 		OPT_END(),
 	};
-	struct pattern_list pl;
+	struct pattern_list pl = { 0 };
 	struct strbuf match_all = STRBUF_INIT;
 
 	/*
@@ -901,7 +895,6 @@ static int sparse_checkout_disable(int argc, const char **argv)
 
 	repo_read_index(the_repository);
 
-	memset(&pl, 0, sizeof(pl));
 	hashmap_init(&pl.recursive_hashmap, pl_hashmap_cmp, NULL, 0);
 	hashmap_init(&pl.parent_hashmap, pl_hashmap_cmp, NULL, 0);
 	pl.use_cone_patterns = 0;

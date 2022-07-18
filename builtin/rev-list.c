@@ -489,7 +489,7 @@ static int try_bitmap_disk_usage(struct rev_info *revs,
 int cmd_rev_list(int argc, const char **argv, const char *prefix)
 {
 	struct rev_info revs;
-	struct rev_list_info info;
+	struct rev_list_info info = { 0 };
 	struct setup_revision_opt s_r_opt = {
 		.allow_exclude_promisor_objects = 1,
 	};
@@ -544,7 +544,6 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 
 	argc = setup_revisions(argc, argv, &revs, &s_r_opt);
 
-	memset(&info, 0, sizeof(info));
 	info.revs = &revs;
 	if (revs.bisect)
 		bisect_list = 1;

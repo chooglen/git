@@ -1103,10 +1103,9 @@ unsigned long get_size_from_delta(struct packed_git *p,
 {
 	const unsigned char *data;
 	unsigned char delta_head[20], *in;
-	git_zstream stream;
+	git_zstream stream = { 0 };
 	int st;
 
-	memset(&stream, 0, sizeof(stream));
 	stream.next_out = delta_head;
 	stream.avail_out = sizeof(delta_head);
 
@@ -1607,13 +1606,12 @@ static void *unpack_compressed_entry(struct packed_git *p,
 				    unsigned long size)
 {
 	int st;
-	git_zstream stream;
+	git_zstream stream = { 0 };
 	unsigned char *buffer, *in;
 
 	buffer = xmallocz_gently(size);
 	if (!buffer)
 		return NULL;
-	memset(&stream, 0, sizeof(stream));
 	stream.next_out = buffer;
 	stream.avail_out = size + 1;
 

@@ -2279,14 +2279,13 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 
 static const char *unpack_with_sideband(struct shallow_info *si)
 {
-	struct async muxer;
+	struct async muxer = { 0 };
 	const char *ret;
 
 	if (!use_sideband)
 		return unpack(0, si);
 
 	use_keepalive = KEEPALIVE_AFTER_NUL;
-	memset(&muxer, 0, sizeof(muxer));
 	muxer.proc = copy_to_sideband;
 	muxer.in = -1;
 	if (start_async(&muxer))

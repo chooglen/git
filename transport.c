@@ -365,10 +365,9 @@ static int fetch_refs_via_pack(struct transport *transport,
 	int ret = 0;
 	struct git_transport_data *data = transport->data;
 	struct ref *refs = NULL;
-	struct fetch_pack_args args;
+	struct fetch_pack_args args = { 0 };
 	struct ref *refs_tmp = NULL;
 
-	memset(&args, 0, sizeof(args));
 	args.uploadpack = data->options.uploadpack;
 	args.keep_pack = data->options.keep;
 	args.lock_pack = 1;
@@ -489,9 +488,8 @@ static void update_one_tracking_ref(struct remote *remote, char *refname,
 				    struct object_id *new_oid, int deletion,
 				    int verbose)
 {
-	struct refspec_item rs;
+	struct refspec_item rs = { 0 };
 
-	memset(&rs, 0, sizeof(rs));
 	rs.src = refname;
 	rs.dst = NULL;
 
@@ -811,7 +809,7 @@ void transport_print_push_status(const char *dest, struct ref *refs,
 static int git_transport_push(struct transport *transport, struct ref *remote_refs, int flags)
 {
 	struct git_transport_data *data = transport->data;
-	struct send_pack_args args;
+	struct send_pack_args args = { 0 };
 	int ret = 0;
 
 	if (transport_color_config() < 0)
@@ -820,7 +818,6 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 	if (!data->got_remote_heads)
 		get_refs_via_connect(transport, 1, NULL);
 
-	memset(&args, 0, sizeof(args));
 	args.send_mirror = !!(flags & TRANSPORT_PUSH_MIRROR);
 	args.force_update = !!(flags & TRANSPORT_PUSH_FORCE);
 	args.use_thin_pack = data->options.thin;

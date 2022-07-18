@@ -868,7 +868,7 @@ static int get_pack(struct fetch_pack_args *args,
 		    struct ref **sought, int nr_sought,
 		    struct oidset *gitmodules_oids)
 {
-	struct async demux;
+	struct async demux = { 0 };
 	int do_keep = args->keep_pack;
 	const char *cmd_name;
 	struct pack_header header;
@@ -877,7 +877,6 @@ static int get_pack(struct fetch_pack_args *args,
 	int fsck_objects = 0;
 	int ret;
 
-	memset(&demux, 0, sizeof(demux));
 	if (use_sideband) {
 		/* xd[] is talking with upload-pack; subprocess reads from
 		 * xd[0], spits out band#2 to stderr, and feeds us band#1

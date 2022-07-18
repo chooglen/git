@@ -3401,7 +3401,7 @@ static int make_patch(struct repository *r,
 		      struct replay_opts *opts)
 {
 	struct strbuf buf = STRBUF_INIT;
-	struct rev_info log_tree_opt;
+	struct rev_info log_tree_opt = { 0 };
 	const char *subject;
 	char hex[GIT_MAX_HEXSZ + 1];
 	int res = 0;
@@ -3412,7 +3412,6 @@ static int make_patch(struct repository *r,
 	res |= write_rebase_head(&commit->object.oid);
 
 	strbuf_addf(&buf, "%s/patch", get_dir(opts));
-	memset(&log_tree_opt, 0, sizeof(log_tree_opt));
 	repo_init_revisions(r, &log_tree_opt, NULL);
 	log_tree_opt.abbrev = 0;
 	log_tree_opt.diff = 1;
@@ -4532,10 +4531,9 @@ cleanup_head_ref:
 		}
 
 		if (opts->verbose) {
-			struct rev_info log_tree_opt;
+			struct rev_info log_tree_opt = { 0 };
 			struct object_id orig, head;
 
-			memset(&log_tree_opt, 0, sizeof(log_tree_opt));
 			repo_init_revisions(r, &log_tree_opt, NULL);
 			log_tree_opt.diff = 1;
 			log_tree_opt.diffopt.output_format =

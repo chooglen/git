@@ -3,10 +3,9 @@
 
 int cmd__index_version(int argc, const char **argv)
 {
-	struct cache_header hdr;
+	struct cache_header hdr = { 0 };
 	int version;
 
-	memset(&hdr,0,sizeof(hdr));
 	if (read(0, &hdr, sizeof(hdr)) != sizeof(hdr))
 		return 0;
 	version = ntohl(hdr.hdr_version);

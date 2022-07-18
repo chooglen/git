@@ -148,9 +148,8 @@ static int ls_refs_config(const char *var, const char *value, void *data)
 
 int ls_refs(struct repository *r, struct packet_reader *request)
 {
-	struct ls_refs_data data;
+	struct ls_refs_data data = { 0 };
 
-	memset(&data, 0, sizeof(data));
 	strvec_init(&data.prefixes);
 	strbuf_init(&data.buf, 0);
 

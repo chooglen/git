@@ -707,7 +707,7 @@ static int merge_commit(struct notes_merge_options *o)
 	struct object_id oid, parent_oid;
 	struct notes_tree *t;
 	struct commit *partial;
-	struct pretty_print_context pretty_ctx;
+	struct pretty_print_context pretty_ctx = { 0 };
 	void *local_ref_to_free;
 	int ret;
 
@@ -740,7 +740,6 @@ static int merge_commit(struct notes_merge_options *o)
 		die(_("failed to finalize notes merge"));
 
 	/* Reuse existing commit message in reflog message */
-	memset(&pretty_ctx, 0, sizeof(pretty_ctx));
 	format_commit_message(partial, "%s", &msg, &pretty_ctx);
 	strbuf_trim(&msg);
 	strbuf_insertstr(&msg, 0, "notes: ");

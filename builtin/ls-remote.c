@@ -53,7 +53,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	struct remote *remote;
 	struct transport *transport;
 	const struct ref *ref;
-	struct ref_array ref_array;
+	struct ref_array ref_array = { 0 };
 	struct string_list sorting_options = STRING_LIST_INIT_DUP;
 
 	struct option options[] = {
@@ -77,8 +77,6 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 		OPT_STRING_LIST('o', "server-option", &server_options, N_("server-specific"), N_("option to transmit")),
 		OPT_END()
 	};
-
-	memset(&ref_array, 0, sizeof(ref_array));
 
 	argc = parse_options(argc, argv, prefix, options, ls_remote_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);

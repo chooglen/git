@@ -3135,7 +3135,7 @@ static int files_reflog_expire(struct ref_store *ref_store,
 	struct files_ref_store *refs =
 		files_downcast(ref_store, REF_STORE_WRITE, "reflog_expire");
 	struct lock_file reflog_lock = LOCK_INIT;
-	struct expire_reflog_cb cb;
+	struct expire_reflog_cb cb = { 0 };
 	struct ref_lock *lock;
 	struct strbuf log_file_sb = STRBUF_INIT;
 	char *log_file;
@@ -3143,7 +3143,6 @@ static int files_reflog_expire(struct ref_store *ref_store,
 	struct strbuf err = STRBUF_INIT;
 	const struct object_id *oid;
 
-	memset(&cb, 0, sizeof(cb));
 	cb.rewrite = !!(expire_flags & EXPIRE_REFLOGS_REWRITE);
 	cb.dry_run = !!(expire_flags & EXPIRE_REFLOGS_DRY_RUN);
 	cb.policy_cb = policy_cb_data;

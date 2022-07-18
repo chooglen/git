@@ -1550,10 +1550,9 @@ static int find_first_merges(struct repository *repo,
 	const char *rev_args[] = { "rev-list", "--merges", "--ancestry-path",
 				   "--all", merged_revision, NULL };
 	struct rev_info revs;
-	struct setup_revision_opt rev_opts;
+	struct setup_revision_opt rev_opts = { 0 };
 
 	memset(result, 0, sizeof(struct object_array));
-	memset(&rev_opts, 0, sizeof(rev_opts));
 
 	/* get all revisions that merge commit a */
 	xsnprintf(merged_revision, sizeof(merged_revision), "^%s",
@@ -4089,9 +4088,8 @@ static int checkout(struct merge_options *opt,
 	/* Switch the index/working copy from old to new */
 	int ret;
 	struct tree_desc trees[2];
-	struct unpack_trees_options unpack_opts;
+	struct unpack_trees_options unpack_opts = { 0 };
 
-	memset(&unpack_opts, 0, sizeof(unpack_opts));
 	unpack_opts.head_idx = -1;
 	unpack_opts.src_index = opt->repo->index;
 	unpack_opts.dst_index = opt->repo->index;

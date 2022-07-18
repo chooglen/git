@@ -4,7 +4,7 @@
 
 int win32_fsync_no_flush(int fd)
 {
-       IO_STATUS_BLOCK io_status;
+	IO_STATUS_BLOCK io_status = { 0 };
 
 #define FLUSH_FLAGS_FILE_DATA_ONLY 1
 
@@ -17,7 +17,6 @@ int win32_fsync_no_flush(int fd)
 		return -1;
        }
 
-       memset(&io_status, 0, sizeof(io_status));
        if (NtFlushBuffersFileEx((HANDLE)_get_osfhandle(fd), FLUSH_FLAGS_FILE_DATA_ONLY,
 				NULL, 0, &io_status)) {
 		errno = EINVAL;

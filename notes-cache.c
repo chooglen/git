@@ -11,7 +11,7 @@ static int notes_cache_match_validity(struct repository *r,
 {
 	struct object_id oid;
 	struct commit *commit;
-	struct pretty_print_context pretty_ctx;
+	struct pretty_print_context pretty_ctx = { 0 };
 	struct strbuf msg = STRBUF_INIT;
 	int ret;
 
@@ -22,7 +22,6 @@ static int notes_cache_match_validity(struct repository *r,
 	if (!commit)
 		return 0;
 
-	memset(&pretty_ctx, 0, sizeof(pretty_ctx));
 	format_commit_message(commit, "%s", &msg, &pretty_ctx);
 	strbuf_trim(&msg);
 

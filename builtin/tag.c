@@ -39,13 +39,11 @@ static int config_sign_tag = -1; /* unspecified */
 static int list_tags(struct ref_filter *filter, struct ref_sorting *sorting,
 		     struct ref_format *format)
 {
-	struct ref_array array;
+	struct ref_array array = { 0 };
 	struct strbuf output = STRBUF_INIT;
 	struct strbuf err = STRBUF_INIT;
 	char *to_free = NULL;
 	int i;
-
-	memset(&array, 0, sizeof(array));
 
 	if (filter->lines == -1)
 		filter->lines = 0;
@@ -532,8 +530,8 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	filter.ignore_case = icase;
 	if (cmdmode == 'l') {
 		if (column_active(colopts)) {
-			struct column_options copts;
-			memset(&copts, 0, sizeof(copts));
+			struct column_options copts = { 0 };
+
 			copts.padding = 2;
 			run_column_filter(colopts, &copts);
 		}

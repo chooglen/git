@@ -41,16 +41,14 @@ static int diff_grep(mmfile_t *one, mmfile_t *two,
 		     regex_t *regexp, kwset_t kws)
 {
 	struct diffgrep_cb ecbdata;
-	xpparam_t xpp;
-	xdemitconf_t xecfg;
+	xpparam_t xpp = { 0 };
+	xdemitconf_t xecfg = { 0 };
 	int ret;
 
 	/*
 	 * We have both sides; need to run textual diff and see if
 	 * the pattern appears on added/deleted lines.
 	 */
-	memset(&xpp, 0, sizeof(xpp));
-	memset(&xecfg, 0, sizeof(xecfg));
 	ecbdata.regexp = regexp;
 	ecbdata.hit = 0;
 	xecfg.flags = XDL_EMIT_NO_HUNK_HDR;

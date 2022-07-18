@@ -198,7 +198,7 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 	if (cmd) {
 		opts->revs = NULL;
 	} else {
-		struct setup_revision_opt s_r_opt;
+		struct setup_revision_opt s_r_opt = { 0 };
 		opts->revs = xmalloc(sizeof(*opts->revs));
 		repo_init_revisions(the_repository, opts->revs, NULL);
 		opts->revs->no_walk = 1;
@@ -207,7 +207,6 @@ static int run_sequencer(int argc, const char **argv, struct replay_opts *opts)
 			usage_with_options(usage_str, options);
 		if (!strcmp(argv[1], "-"))
 			argv[1] = "@{-1}";
-		memset(&s_r_opt, 0, sizeof(s_r_opt));
 		s_r_opt.assume_dashdash = 1;
 		argc = setup_revisions(argc, argv, opts->revs, &s_r_opt);
 	}

@@ -488,9 +488,8 @@ static int get_head_names(const struct ref *remote_refs, struct ref_states *stat
 {
 	struct ref *ref, *matches;
 	struct ref *fetch_map = NULL, **fetch_map_tail = &fetch_map;
-	struct refspec_item refspec;
+	struct refspec_item refspec = { 0 };
 
-	memset(&refspec, 0, sizeof(refspec));
 	refspec.force = 0;
 	refspec.pattern = 1;
 	refspec.src = refspec.dst = "refs/heads/*";
@@ -541,10 +540,9 @@ static int add_branch_for_removal(const char *refname,
 	const struct object_id *oid, int flags, void *cb_data)
 {
 	struct branches_for_remote *branches = cb_data;
-	struct refspec_item refspec;
+	struct refspec_item refspec = { 0 };
 	struct known_remote *kr;
 
-	memset(&refspec, 0, sizeof(refspec));
 	refspec.dst = (char *)refname;
 	if (remote_find_tracking(branches->remote, &refspec))
 		return 0;
@@ -854,10 +852,9 @@ static int rm(int argc, const char **argv)
 	struct known_remotes known_remotes = { NULL, NULL };
 	struct string_list branches = STRING_LIST_INIT_DUP;
 	struct string_list skipped = STRING_LIST_INIT_DUP;
-	struct branches_for_remote cb_data;
+	struct branches_for_remote cb_data = { 0 };
 	int i, result;
 
-	memset(&cb_data, 0, sizeof(cb_data));
 	cb_data.branches = &branches;
 	cb_data.skipped = &skipped;
 	cb_data.keep = &known_remotes;
@@ -956,12 +953,11 @@ static int append_ref_to_tracked_list(const char *refname,
 	const struct object_id *oid, int flags, void *cb_data)
 {
 	struct ref_states *states = cb_data;
-	struct refspec_item refspec;
+	struct refspec_item refspec = { 0 };
 
 	if (flags & REF_ISSYMREF)
 		return 0;
 
-	memset(&refspec, 0, sizeof(refspec));
 	refspec.dst = (char *)refname;
 	if (!remote_find_tracking(states->remote, &refspec))
 		string_list_append(&states->tracked, abbrev_branch(refspec.src));
