@@ -33,7 +33,7 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 	FILE *in = stdin;
 	struct strbuf input = STRBUF_INIT, output = STRBUF_INIT;
 	int ret;
-	struct fmt_merge_msg_opts opts = { 0 };
+	struct fmt_merge_msg_opts opts;
 
 	git_config(fmt_merge_msg_config, NULL);
 	argc = parse_options(argc, argv, prefix, options, fmt_merge_msg_usage,
@@ -55,6 +55,7 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 	if (message)
 		strbuf_addstr(&output, message);
 
+	memset(&opts, 0, sizeof(opts));
 	opts.add_title = !message;
 	opts.credit_people = 1;
 	opts.shortlog_len = shortlog_len;

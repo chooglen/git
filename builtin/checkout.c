@@ -651,9 +651,10 @@ static int reset_tree(struct tree *tree, const struct checkout_opts *o,
 		      int worktree, int *writeout_error,
 		      struct branch_info *info)
 {
-	struct unpack_trees_options opts = { 0 };
+	struct unpack_trees_options opts;
 	struct tree_desc tree_desc;
 
+	memset(&opts, 0, sizeof(opts));
 	opts.head_idx = -1;
 	opts.update = worktree;
 	opts.skip_unmerged = !worktree;
@@ -735,9 +736,10 @@ static int merge_working_tree(const struct checkout_opts *opts,
 	} else {
 		struct tree_desc trees[2];
 		struct tree *tree;
-		struct unpack_trees_options topts = { 0 };
+		struct unpack_trees_options topts;
 		const struct object_id *old_commit_oid;
 
+		memset(&topts, 0, sizeof(topts));
 		topts.head_idx = -1;
 		topts.src_index = &the_index;
 		topts.dst_index = &the_index;
@@ -1431,8 +1433,9 @@ static void die_expecting_a_branch(const struct branch_info *branch_info)
 
 static void die_if_some_operation_in_progress(void)
 {
-	struct wt_status_state state = { 0 };
+	struct wt_status_state state;
 
+	memset(&state, 0, sizeof(state));
 	wt_status_get_state(the_repository, &state, 0);
 
 	if (state.merge_in_progress)

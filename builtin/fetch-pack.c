@@ -51,7 +51,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	struct string_list pack_lockfiles = STRING_LIST_INIT_DUP;
 	struct string_list *pack_lockfiles_ptr = NULL;
 	struct child_process *conn;
-	struct fetch_pack_args args = { 0 };
+	struct fetch_pack_args args;
 	struct oid_array shallow = OID_ARRAY_INIT;
 	struct string_list deepen_not = STRING_LIST_INIT_DUP;
 	struct packet_reader reader;
@@ -61,6 +61,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 
 	packet_trace_identity("fetch-pack");
 
+	memset(&args, 0, sizeof(args));
 	args.uploadpack = "git-upload-pack";
 
 	for (i = 1; i < argc && *argv[i] == '-'; i++) {

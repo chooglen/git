@@ -665,7 +665,7 @@ static int batch_objects(struct batch_options *opt)
 {
 	struct strbuf input = STRBUF_INIT;
 	struct strbuf output = STRBUF_INIT;
-	struct expand_data data = { 0 };
+	struct expand_data data;
 	int save_warning;
 	int retval = 0;
 
@@ -674,6 +674,7 @@ static int batch_objects(struct batch_options *opt)
 	 * object_info to be handed to oid_object_info_extended for each
 	 * object.
 	 */
+	memset(&data, 0, sizeof(data));
 	data.mark_query = 1;
 	strbuf_expand(&output,
 		      opt->format ? opt->format : DEFAULT_FORMAT,

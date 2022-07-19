@@ -446,7 +446,7 @@ static void *unpack_entry_data(off_t offset, unsigned long size,
 {
 	static char fixed_buf[8192];
 	int status;
-	git_zstream stream = { 0 };
+	git_zstream stream;
 	void *buf;
 	git_hash_ctx c;
 	char hdr[32];
@@ -463,6 +463,7 @@ static void *unpack_entry_data(off_t offset, unsigned long size,
 	else
 		buf = xmallocz(size);
 
+	memset(&stream, 0, sizeof(stream));
 	git_inflate_init(&stream);
 	stream.next_out = buf;
 	stream.avail_out = buf == fixed_buf ? sizeof(fixed_buf) : size;
@@ -562,12 +563,13 @@ static void *unpack_data(struct object_entry *obj,
 	off_t from = obj[0].idx.offset + obj[0].hdr_size;
 	off_t len = obj[1].idx.offset - from;
 	unsigned char *data, *inbuf;
-	git_zstream stream = { 0 };
+	git_zstream stream;
 	int status;
 
 	data = xmallocz(consume ? 64*1024 : obj->size);
 	inbuf = xmalloc((len < 64*1024) ? (int)len : 64*1024);
 
+	memset(&stream, 0, sizeof(stream));
 	git_inflate_init(&stream);
 	stream.next_out = data;
 	stream.avail_out = consume ? 64*1024 : obj->size;

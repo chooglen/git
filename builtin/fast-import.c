@@ -443,8 +443,9 @@ static void checkpoint_signal(int signo)
 
 static void set_checkpoint_signal(void)
 {
-	struct sigaction sa = { 0 };
+	struct sigaction sa;
 
+	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = checkpoint_signal;
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART;
@@ -2385,7 +2386,7 @@ static void file_change_cr(const char *s, struct branch *b, int rename)
 	static struct strbuf s_uq = STRBUF_INIT;
 	static struct strbuf d_uq = STRBUF_INIT;
 	const char *endp;
-	struct tree_entry leaf = { 0 };
+	struct tree_entry leaf;
 
 	strbuf_reset(&s_uq);
 	if (!unquote_c_style(&s_uq, s, &endp)) {
@@ -2411,6 +2412,7 @@ static void file_change_cr(const char *s, struct branch *b, int rename)
 		d = d_uq.buf;
 	}
 
+	memset(&leaf, 0, sizeof(leaf));
 	if (rename)
 		tree_content_remove(&b->branch_tree, s, &leaf, 1);
 	else
@@ -3221,7 +3223,7 @@ static void parse_progress(void)
 static void parse_alias(void)
 {
 	struct object_entry *e;
-	struct branch b = { 0 };
+	struct branch b;
 
 	skip_optional_lf();
 	read_next_command();
@@ -3232,6 +3234,7 @@ static void parse_alias(void)
 		die(_("Expected 'mark' command, got %s"), command_buf.buf);
 
 	/* to ... */
+	memset(&b, 0, sizeof(b));
 	if (!parse_objectish_with_prefix(&b, "to "))
 		die(_("Expected 'to' command, got %s"), command_buf.buf);
 	e = find_object(&b.oid);

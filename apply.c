@@ -1854,9 +1854,11 @@ static inline int metadata_changes(struct patch *patch)
 static char *inflate_it(const void *data, unsigned long size,
 			unsigned long inflated_size)
 {
-	git_zstream stream = { 0 };
+	git_zstream stream;
 	void *out;
 	int st;
+
+	memset(&stream, 0, sizeof(stream));
 
 	stream.next_in = (unsigned char *)data;
 	stream.avail_in = size;
@@ -2849,9 +2851,11 @@ static int apply_one_fragment(struct apply_state *state,
 	int hunk_linenr = frag->linenr;
 	unsigned long leading, trailing;
 	int pos, applied_pos;
-	struct image preimage = { 0 };
-	struct image postimage = { 0 };
+	struct image preimage;
+	struct image postimage;
 
+	memset(&preimage, 0, sizeof(preimage));
+	memset(&postimage, 0, sizeof(postimage));
 	oldlines = xmalloc(size);
 	strbuf_init(&newlines, size);
 
