@@ -413,12 +413,32 @@ struct init_cb {
 };
 #define INIT_CB_INIT { 0 }
 
+static const char *submodule_strategy_to_string(enum submodule_update_type type)
+{
+	switch (type) {
+	case SM_UPDATE_CHECKOUT:
+		return "checkout";
+	case SM_UPDATE_MERGE:
+		return "merge";
+	case SM_UPDATE_REBASE:
+		return "rebase";
+	case SM_UPDATE_NONE:
+		return "none";
+	case SM_UPDATE_UNSPECIFIED:
+	case SM_UPDATE_COMMAND:
+		BUG("init_submodule() should handle type %d", type);
+	default:
+		BUG("unexpected update strategy type: %d", type);
+	}
+}
+
 static void init_submodule(const char *path, const char *prefix,
 			   unsigned int flags)
 {
 	const struct submodule *sub;
 	struct strbuf sb = STRBUF_INIT;
-	char *upd = NULL, *url = NULL, *displaypath;
+	const char *upd;
+	char *url = NULL, *displaypath;
 
 	displaypath = get_submodule_displaypath(path, prefix);
 
@@ -474,14 +494,14 @@ static void init_submodule(const char *path, const char *prefix,
 
 	/* Copy "update" setting when it is not set yet */
 	strbuf_addf(&sb, "submodule.%s.update", sub->name);
-	if (git_config_get_string(sb.buf, &upd) &&
+	if (git_config_get_string_tmp(sb.buf, &upd) &&
 	    sub->update_strategy.type != SM_UPDATE_UNSPECIFIED) {
 		if (sub->update_strategy.type == SM_UPDATE_COMMAND) {
 			fprintf(stderr, _("warning: command update mode suggested for submodule '%s'\n"),
 				sub->name);
-			upd = xstrdup("none");
+			upd = "none";
 		} else {
-			upd = xstrdup(submodule_strategy_to_string(&sub->update_strategy));
+			upd = submodule_strategy_to_string(sub->update_strategy.type);
 		}
 
 		if (git_config_set_gently(sb.buf, upd))
@@ -490,7 +510,6 @@ static void init_submodule(const char *path, const char *prefix,
 	strbuf_release(&sb);
 	free(displaypath);
 	free(url);
-	free(upd);
 }
 
 static void init_submodule_cb(const struct cache_entry *list_item, void *cb_data)
