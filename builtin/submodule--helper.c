@@ -2443,8 +2443,7 @@ static int update_submodule(struct update_data *update_data)
 			    update_data->displaypath);
 		if (res == 128)
 			exit(res);
-		else if (res)
-			return 1;
+		return 1;
 	}
 
 	return 0;
