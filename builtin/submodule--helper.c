@@ -2263,9 +2263,9 @@ static int run_update_procedure(struct update_data *ud)
 		 */
 		if (!is_tip_reachable(ud->sm_path, &ud->oid) &&
 		    fetch_in_submodule(ud->sm_path, ud->depth, ud->quiet, &ud->oid))
-			die(_("Fetched in submodule path '%s', but it did not "
-			      "contain %s. Direct fetching of that commit failed."),
-			    ud->displaypath, oid_to_hex(&ud->oid));
+			return die_message(_("Fetched in submodule path '%s', but it did not "
+					     "contain %s. Direct fetching of that commit failed."),
+					   ud->displaypath, oid_to_hex(&ud->oid));
 	}
 
 	return run_update_command(ud, subforce);
@@ -2309,13 +2309,14 @@ static const char *remote_submodule_branch(const char *path)
 	return branch;
 }
 
-static void ensure_core_worktree(const char *path)
+static int ensure_core_worktree(const char *path)
 {
 	const char *cw;
 	struct repository subrepo;
 
 	if (repo_submodule_init(&subrepo, the_repository, path, null_oid()))
-		die(_("could not get a repository handle for submodule '%s'"), path);
+		return die_message(_("could not get a repository handle for submodule '%s'"),
+				   path);
 
 	if (!repo_config_get_string_tmp(&subrepo, "core.worktree", &cw)) {
 		char *cfg_file, *abs_path;
@@ -2333,6 +2334,8 @@ static void ensure_core_worktree(const char *path)
 		free(abs_path);
 		strbuf_release(&sb);
 	}
+
+	return 0;
 }
 
 static const char *submodule_update_type_to_label(enum submodule_update_type type)
@@ -2408,7 +2411,9 @@ static int update_submodule(struct update_data *update_data)
 {
 	int ret;
 
-	ensure_core_worktree(update_data->sm_path);
+	ret = ensure_core_worktree(update_data->sm_path);
+	if (ret)
+		return ret;
 
 	update_data->displaypath = get_submodule_displaypath(
 		update_data->sm_path, update_data->prefix);
@@ -2418,16 +2423,14 @@ static int update_submodule(struct update_data *update_data)
 						  update_data->sm_path,
 						  update_data->update_default,
 						  &update_data->update_strategy);
-	if (ret) {
-		*must_die_on_failure = 1;
+	if (ret)
 		return ret;
-	}
 
 	if (update_data->just_cloned)
 		oidcpy(&update_data->suboid, null_oid());
 	else if (resolve_gitlink_ref(update_data->sm_path, "HEAD", &update_data->suboid))
-		die(_("Unable to find current revision in submodule path '%s'"),
-			update_data->displaypath);
+		return die_message(_("Unable to find current revision in submodule path '%s'"),
+				   update_data->displaypath);
 
 	if (update_data->remote) {
 		char *remote_name = get_default_remote_submodule(update_data->sm_path);
@@ -2437,13 +2440,13 @@ static int update_submodule(struct update_data *update_data)
 		if (!update_data->nofetch) {
 			if (fetch_in_submodule(update_data->sm_path, update_data->depth,
 					      0, NULL))
-				die(_("Unable to fetch in submodule path '%s'"),
-				    update_data->sm_path);
+				return die_message(_("Unable to fetch in submodule path '%s'"),
+						   update_data->sm_path);
 		}
 
 		if (resolve_gitlink_ref(update_data->sm_path, remote_ref, &update_data->oid))
-			die(_("Unable to find %s revision in submodule path '%s'"),
-			    remote_ref, update_data->sm_path);
+			return die_message(_("Unable to find %s revision in submodule path '%s'"),
+					   remote_ref, update_data->sm_path);
 
 		free(remote_ref);
 	}
