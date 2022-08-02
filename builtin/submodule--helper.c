@@ -2141,7 +2141,8 @@ static int fetch_in_submodule(const char *module_path, int depth, int quiet, str
 	return run_command(&cp);
 }
 
-static int run_update_command(struct update_data *ud, int subforce)
+static int run_update_command(struct update_data *ud, int subforce,
+			      int *must_die_on_failure)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	char *oid = oid_to_hex(&ud->oid);
@@ -2205,7 +2206,7 @@ static int run_update_command(struct update_data *ud, int subforce)
 		}
 
 		if (ret == 128)
-			exit(ret);
+			*must_die_on_failure = 1;
 		return ret;
 	}
 
@@ -2237,7 +2238,8 @@ static int run_update_command(struct update_data *ud, int subforce)
 	return 0;
 }
 
-static int run_update_procedure(struct update_data *ud)
+static int run_update_procedure(struct update_data *ud,
+				int *must_die_on_failure)
 {
 	int subforce = is_null_oid(&ud->suboid) || ud->force;
 
@@ -2264,7 +2266,7 @@ static int run_update_procedure(struct update_data *ud)
 			    ud->displaypath, oid_to_hex(&ud->oid));
 	}
 
-	return run_update_command(ud, subforce);
+	return run_update_command(ud, subforce, must_die_on_failure);
 }
 
 static const char *remote_submodule_branch(const char *path)
@@ -2400,7 +2402,8 @@ static void update_data_to_args(struct update_data *update_data, struct strvec *
 				    "--no-single-branch");
 }
 
-static int update_submodule(struct update_data *update_data)
+static int update_submodule(struct update_data *update_data,
+			    int *must_die_on_failure)
 {
 	ensure_core_worktree(update_data->sm_path);
 
@@ -2436,9 +2439,15 @@ static int update_submodule(struct update_data *update_data)
 		free(remote_ref);
 	}
 
-	if (!oideq(&update_data->oid, &update_data->suboid) || update_data->force)
-		if (run_update_procedure(update_data))
+	if (!oideq(&update_data->oid, &update_data->suboid) || update_data->force) {
+		int ret;
+
+		ret = run_update_procedure(update_data, must_die_on_failure);
+		if (*must_die_on_failure)
+			return ret;
+		if (ret)
 			return 1;
+	}
 
 	if (update_data->recursive) {
 		struct child_process cp = CHILD_PROCESS_INIT;
@@ -2461,7 +2470,7 @@ static int update_submodule(struct update_data *update_data)
 		die_message(_("Failed to recurse into submodule path '%s'"),
 			    update_data->displaypath);
 		if (ret == 128)
-			exit(ret);
+			*must_die_on_failure = 1;
 		return ret;
 	}
 
@@ -2494,12 +2503,19 @@ static int update_submodules(struct update_data *update_data)
 
 	for (i = 0; i < suc.update_clone_nr; i++) {
 		struct update_clone_data ucd = suc.update_clone[i];
+		int must_die_on_failure = 0;
+		int code;
 
 		oidcpy(&update_data->oid, &ucd.oid);
 		update_data->just_cloned = ucd.just_cloned;
 		update_data->sm_path = ucd.sub->path;
 
-		if (update_submodule(update_data))
+		code = update_submodule(update_data, &must_die_on_failure);
+		if (code)
+			ret = code;
+		if (must_die_on_failure)
+			goto cleanup;
+		else if (code)
 			ret = 1;
 	}
 
