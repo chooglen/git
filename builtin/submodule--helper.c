@@ -2486,9 +2486,6 @@ static int update_submodule(struct update_data *update_data)
 	if (ret)
 		return ret;
 
-	update_data->displaypath = get_submodule_displaypath(
-		update_data->sm_path, update_data->prefix);
-
 	ret = determine_submodule_update_strategy(the_repository,
 						  update_data->just_cloned,
 						  update_data->sm_path,
@@ -2593,8 +2590,11 @@ static int update_submodules(struct update_data *update_data)
 		oidcpy(&update_data->oid, &ucd.oid);
 		update_data->just_cloned = ucd.just_cloned;
 		update_data->sm_path = ucd.sub->path;
+		update_data->displaypath = get_submodule_displaypath(
+			update_data->sm_path, update_data->prefix);
 
 		code = update_submodule(update_data);
+		FREE_AND_NULL(update_data->displaypath);
 		if (!code)
 			continue;
 		ret = code;
