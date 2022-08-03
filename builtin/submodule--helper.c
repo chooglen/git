@@ -2482,6 +2482,13 @@ static int update_submodule(struct update_data *update_data)
 {
 	int ret;
 
+	ret = ensure_core_worktree(update_data->sm_path);
+	if (ret)
+		return ret;
+
+	update_data->displaypath = get_submodule_displaypath(
+		update_data->sm_path, update_data->prefix);
+
 	ret = determine_submodule_update_strategy(the_repository,
 						  update_data->just_cloned,
 						  update_data->sm_path,
@@ -2555,24 +2562,6 @@ static int update_submodule(struct update_data *update_data)
 	return 0;
 }
 
-static int update_submodule_outer(struct update_data *update_data)
-{
-	char *to_free, *restore = update_data->displaypath;
-	int ret;
-
-	ensure_core_worktree(update_data->sm_path);
-
-	update_data->displaypath = to_free = get_submodule_displaypath(
-		update_data->sm_path, update_data->prefix);
-
-	ret = update_submodule(update_data);
-
-	free(to_free);
-	update_data->displaypath = restore;
-
-	return ret;
-}
-
 static int update_submodules(struct update_data *update_data)
 {
 	int i, ret = 0;
@@ -2605,7 +2594,7 @@ static int update_submodules(struct update_data *update_data)
 		update_data->just_cloned = ucd.just_cloned;
 		update_data->sm_path = ucd.sub->path;
 
-		code = update_submodule_outer(update_data);
+		code = update_submodule(update_data);
 		if (!code)
 			continue;
 		ret = code;
