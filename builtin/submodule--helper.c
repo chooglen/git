@@ -2586,7 +2586,6 @@ static int update_submodules(struct update_data *update_data)
 			update_data->sm_path, update_data->prefix);
 
 		code = update_submodule(update_data);
-		FREE_AND_NULL(update_data->displaypath);
 		if (code)
 			ret = code;
 		if (code == 128)
