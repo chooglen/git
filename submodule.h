@@ -55,7 +55,7 @@ struct option;
 int option_parse_recurse_submodules_worktree_updater(const struct option *opt,
 						     const char *arg, int unset);
 int option_parse_toplevel_cwd_prefix(const struct option *opt,
-				   const char *arg, int unset);
+				     const char *arg, int unset);
 /*
  * Return the relative path of the top-level process's cwd to the root of the
  * working tree. When printing paths to submodules in the working tree, this

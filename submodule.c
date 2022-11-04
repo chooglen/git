@@ -2076,14 +2076,6 @@ void submodule_unset_core_worktree(const struct submodule *sub)
 	strbuf_release(&config_path);
 }
 
-static const char *get_super_prefix_or_empty(void)
-{
-	const char *s = get_super_prefix();
-	if (!s)
-		s = "";
-	return s;
-}
-
 static int submodule_has_dirty_index(const struct submodule *sub)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
@@ -2111,10 +2103,11 @@ static void submodule_reset_index(const char *path)
 	cp.no_stdin = 1;
 	cp.dir = path;
 
-	strvec_pushf(&cp.args, "--super-prefix=%s%s/",
-		     get_super_prefix_or_empty(), path);
 	/* TODO: determine if this might overwright untracked files */
-	strvec_pushl(&cp.args, "read-tree", "-u", "--reset", NULL);
+	strvec_push(&cp.args, "read-tree");
+	strvec_pushf(&cp.args, "--submodule-prefix=%s%s/",
+		     get_submodule_prefix(), path);
+	strvec_pushl(&cp.args, "-u", "--reset", NULL);
 
 	strvec_push(&cp.args, empty_tree_oid_hex());
 
@@ -2194,9 +2187,10 @@ int submodule_move_head(const char *path,
 	cp.no_stdin = 1;
 	cp.dir = path;
 
-	strvec_pushf(&cp.args, "--super-prefix=%s%s/",
-		     get_super_prefix_or_empty(), path);
-	strvec_pushl(&cp.args, "read-tree", "--recurse-submodules", NULL);
+	strvec_push(&cp.args, "read-tree");
+	strvec_pushf(&cp.args, "--submodule-prefix=%s%s/",
+		     get_submodule_prefix(), path);
+	strvec_push(&cp.args, "--recurse-submodules");
 
 	if (flags & SUBMODULE_MOVE_HEAD_DRY_RUN)
 		strvec_push(&cp.args, "-n");
