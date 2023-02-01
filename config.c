@@ -23,33 +23,7 @@
 #include "color.h"
 #include "refs.h"
 #include "worktree.h"
-
-struct config_source {
-	struct config_source *prev;
-	union {
-		FILE *file;
-		struct config_buf {
-			const char *buf;
-			size_t len;
-			size_t pos;
-		} buf;
-	} u;
-	enum config_origin_type origin_type;
-	const char *name;
-	const char *path;
-	enum config_error_action default_error_action;
-	int linenr;
-	int eof;
-	size_t total_len;
-	struct strbuf value;
-	struct strbuf var;
-	unsigned subsection_case_sensitive : 1;
-
-	int (*do_fgetc)(struct config_source *c);
-	int (*do_ungetc)(int c, struct config_source *conf);
-	long (*do_ftell)(struct config_source *c);
-};
-#define CONFIG_SOURCE_INIT { 0 }
+#include "lib/config.h"
 
 struct config_reader {
 	/*
@@ -150,47 +124,6 @@ static int zlib_compression_seen;
  * static variables, this does not hold config parser state.
  */
 static struct config_set protected_config;
-
-static int config_file_fgetc(struct config_source *conf)
-{
-	return getc_unlocked(conf->u.file);
-}
-
-static int config_file_ungetc(int c, struct config_source *conf)
-{
-	return ungetc(c, conf->u.file);
-}
-
-static long config_file_ftell(struct config_source *conf)
-{
-	return ftell(conf->u.file);
-}
-
-
-static int config_buf_fgetc(struct config_source *conf)
-{
-	if (conf->u.buf.pos < conf->u.buf.len)
-		return conf->u.buf.buf[conf->u.buf.pos++];
-
-	return EOF;
-}
-
-static int config_buf_ungetc(int c, struct config_source *conf)
-{
-	if (conf->u.buf.pos > 0) {
-		conf->u.buf.pos--;
-		if (conf->u.buf.buf[conf->u.buf.pos] != c)
-			BUG("config_buf can only ungetc the same character");
-		return c;
-	}
-
-	return EOF;
-}
-
-static long config_buf_ftell(struct config_source *conf)
-{
-	return conf->u.buf.pos;
-}
 
 struct config_include_data {
 	int depth;
@@ -1999,15 +1932,6 @@ int git_default_config(const char *var, const char *value, void *cb)
 	return 0;
 }
 
-static void config_source_init(struct config_source *source)
-{
-	source->linenr = 1;
-	source->eof = 0;
-	source->total_len = 0;
-	strbuf_init(&source->value, 1024);
-	strbuf_init(&source->var, 1024);
-}
-
 static void config_source_release(struct config_source *source)
 {
 	strbuf_release(&source->value);
@@ -2036,21 +1960,6 @@ static int do_config_from(struct config_source *top, config_fn_t fn, void *data,
 	config_source_release(top);
 
 	return ret;
-}
-
-static void config_source_init_file(struct config_source *source,
-				    const enum config_origin_type origin_type,
-				    const char *name, const char *path, FILE *f)
-{
-	config_source_init(source);
-	source->u.file = f;
-	source->origin_type = origin_type;
-	source->name = name;
-	source->path = path;
-	source->default_error_action = CONFIG_ERROR_DIE;
-	source->do_fgetc = config_file_fgetc;
-	source->do_ungetc = config_file_ungetc;
-	source->do_ftell = config_file_ftell;
 }
 
 static int do_config_from_file(config_fn_t fn,
@@ -2119,24 +2028,6 @@ int git_config_from_file_with_options(config_fn_t fn, const char *filename,
 int git_config_from_file(config_fn_t fn, const char *filename, void *data)
 {
 	return git_config_from_file_with_options(fn, filename, data, NULL);
-}
-
-static void config_source_init_mem(struct config_source *source,
-				   const enum config_origin_type origin_type,
-				   const char *name, const char *buf,
-				   size_t len)
-{
-	config_source_init(source);
-	source->u.buf.buf = buf;
-	source->u.buf.len = len;
-	source->u.buf.pos = 0;
-	source->origin_type = origin_type;
-	source->name = name;
-	source->path = NULL;
-	source->default_error_action = CONFIG_ERROR_ERROR;
-	source->do_fgetc = config_buf_fgetc;
-	source->do_ungetc = config_buf_ungetc;
-	source->do_ftell = config_buf_ftell;
 }
 
 static int git_config_from_mem_lib(config_fn_t fn,

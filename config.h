@@ -1,6 +1,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include "lib/config.h"
 #include "hashmap.h"
 #include "string-list.h"
 
@@ -53,15 +54,6 @@ struct git_config_source {
 	struct repository *repo;
 	const char *blob;
 	enum config_scope scope;
-};
-
-enum config_origin_type {
-	CONFIG_ORIGIN_UNKNOWN = 0,
-	CONFIG_ORIGIN_BLOB,
-	CONFIG_ORIGIN_FILE,
-	CONFIG_ORIGIN_STDIN,
-	CONFIG_ORIGIN_SUBMODULE_BLOB,
-	CONFIG_ORIGIN_CMDLINE
 };
 
 enum config_event_t {
@@ -118,12 +110,7 @@ struct config_options {
 	 */
 	config_parser_event_fn_t event_fn;
 	void *event_fn_data;
-	enum config_error_action {
-		CONFIG_ERROR_UNSET = 0, /* use source-specific default */
-		CONFIG_ERROR_DIE, /* die() on error */
-		CONFIG_ERROR_ERROR, /* error() on error, return -1 */
-		CONFIG_ERROR_SILENT, /* return -1 */
-	} error_action;
+	enum config_error_action error_action;
 };
 
 /**
