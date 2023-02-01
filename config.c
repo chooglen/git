@@ -51,9 +51,32 @@ struct config_source {
 };
 #define CONFIG_SOURCE_INIT { 0 }
 
+struct config_state {
+	/* TODO comment reads a little funny, reword later */
+	/*
+	 * The current config source being parsed. This is only set when parsing
+	 * a config source (e.g. a blob or file).
+	 * This is not owned by config_state; it is the responsibility of the
+	 * config_state_push_source() caller to free it after calling
+	 * config_state_pop_source().
+	 */
+	struct config_source *source;
+};
+
+struct config_state *config_state_new(void)
+{
+	struct config_state *config_state = xmalloc(sizeof(*config_state));
+
+	memset(config_state, 0, sizeof(*config_state));
+	return config_state;
+}
+
 /*
  * The current config source being parsed. This is only set when parsing a
  * config source (e.g. a blob or file).
+ *
+ * FIXME "cf" has been replaced by the_repository->config_state->source. remove
+ * "cf" once we plumb that through all of the callback functions.
  */
 static struct config_source *cf;
 /*
@@ -73,21 +96,26 @@ static struct key_value_info *current_config_kvi;
  */
 static enum config_scope current_parsing_scope;
 
-static inline void config_state_push_source(struct config_source *top)
+static inline void config_state_push_source(struct config_state *state,
+					    struct config_source *top)
 {
-	if (cf)
-		top->prev = cf;
-	cf = top;
+	if (state->source)
+		top->prev = state->source;
+	state->source = top;
+	/* FIXME remove this when cf is removed. */
+	cf = state->source;
 }
 
-static inline struct config_source *config_state_pop_source()
+static inline struct config_source *config_state_pop_source(struct config_state *state)
 {
 
 	struct config_source *ret;
-	if (!cf)
+	if (!state->source)
 		BUG("Can't pop if you don't have anything");
-	ret = cf;
-	cf = cf->prev;
+	ret = state->source;
+	state->source = state->source->prev;
+	/* FIXME remove this when cf is removed. */
+	cf = state->source;
 	return ret;
 }
 
@@ -727,7 +755,7 @@ int git_config_from_parameters(config_fn_t fn, void *data)
 	struct config_source source = CONFIG_SOURCE_INIT;
 
 	source.origin_type = CONFIG_ORIGIN_CMDLINE;
-	config_state_push_source(&source);
+	config_state_push_source(the_repository->config_state, &source);
 
 	env = getenv(CONFIG_COUNT_ENVIRONMENT);
 	if (env) {
@@ -785,7 +813,7 @@ out:
 	strbuf_release(&envvar);
 	strvec_clear(&to_free);
 	free(envw);
-	config_state_pop_source();
+	config_state_pop_source(the_repository->config_state);
 	return ret;
 }
 
@@ -1320,7 +1348,7 @@ int git_config_int(const char *name, const char *value)
 {
 	int ret;
 	if (!git_parse_int(value, &ret))
-		die_bad_number(cf, name, value);
+		die_bad_number(the_repository->config_state->source, name, value);
 	return ret;
 }
 
@@ -1328,7 +1356,7 @@ int64_t git_config_int64(const char *name, const char *value)
 {
 	int64_t ret;
 	if (!git_parse_int64(value, &ret))
-		die_bad_number(cf, name, value);
+		die_bad_number(the_repository->config_state->source, name, value);
 	return ret;
 }
 
@@ -1336,7 +1364,7 @@ unsigned long git_config_ulong(const char *name, const char *value)
 {
 	unsigned long ret;
 	if (!git_parse_ulong(value, &ret))
-		die_bad_number(cf, name, value);
+		die_bad_number(the_repository->config_state->source, name, value);
 	return ret;
 }
 
@@ -1344,7 +1372,7 @@ ssize_t git_config_ssize_t(const char *name, const char *value)
 {
 	ssize_t ret;
 	if (!git_parse_ssize_t(value, &ret))
-		die_bad_number(cf, name, value);
+		die_bad_number(the_repository->config_state->source, name, value);
 	return ret;
 }
 
@@ -1961,13 +1989,13 @@ static int do_config_from(struct config_source *top, config_fn_t fn, void *data,
 	top->total_len = 0;
 	strbuf_init(&top->value, 1024);
 	strbuf_init(&top->var, 1024);
-	config_state_push_source(top);
+	config_state_push_source(the_repository->config_state, top);
 	ret = git_parse_source(top, fn, data, opts);
 
 	/* pop config-file parsing state stack */
 	strbuf_release(&top->value);
 	strbuf_release(&top->var);
-	config_state_pop_source();
+	config_state_pop_source(the_repository->config_state);
 
 	return ret;
 }
@@ -2350,6 +2378,7 @@ static int configset_add_value(struct config_set *cs, const char *key, const cha
 
 	if (!cf)
 		BUG("configset_add_value has no source");
+
 	if (cf->name) {
 		kv_info->filename = strintern(cf->name);
 		kv_info->linenr = cf->linenr;
@@ -3785,8 +3814,8 @@ const char *current_config_origin_type(void)
 	int type;
 	if (current_config_kvi)
 		type = current_config_kvi->origin_type;
-	else if(cf)
-		type = cf->origin_type;
+	else if(the_repository->config_state->source)
+		type = the_repository->config_state->source->origin_type;
 	else
 		BUG("current_config_origin_type called outside config callback");
 
@@ -3831,8 +3860,8 @@ const char *current_config_name(void)
 	const char *name;
 	if (current_config_kvi)
 		name = current_config_kvi->filename;
-	else if (cf)
-		name = cf->name;
+	else if (the_repository->config_state->source)
+		name = the_repository->config_state->source->name;
 	else
 		BUG("current_config_name called outside config callback");
 	return name ? name : "";
@@ -3851,7 +3880,7 @@ int current_config_line(void)
 	if (current_config_kvi)
 		return current_config_kvi->linenr;
 	else
-		return cf->linenr;
+		return the_repository->config_state->source->linenr;
 }
 
 int lookup_config(const char **mapping, int nr_mapping, const char *var)

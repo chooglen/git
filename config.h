@@ -4,6 +4,7 @@
 #include "hashmap.h"
 #include "string-list.h"
 
+struct config_state *config_state_new(void);
 
 /**
  * The config API gives callers a way to access Git configuration files

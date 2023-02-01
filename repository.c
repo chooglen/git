@@ -27,6 +27,7 @@ void initialize_the_repository(void)
 	the_repo.objects = raw_object_store_new();
 	the_repo.remote_state = remote_state_new();
 	the_repo.parsed_objects = parsed_object_pool_new();
+	the_repo.config_state = config_state_new();
 
 	repo_set_hash_algo(&the_repo, GIT_HASH_SHA1);
 }
@@ -169,6 +170,7 @@ int repo_init(struct repository *repo,
 	repo->objects = raw_object_store_new();
 	repo->parsed_objects = parsed_object_pool_new();
 	repo->remote_state = remote_state_new();
+	repo->config_state = config_state_new();
 
 	if (repo_init_gitdir(repo, gitdir))
 		goto error;
@@ -293,6 +295,11 @@ void repo_clear(struct repository *repo)
 	if (repo->remote_state) {
 		remote_state_clear(repo->remote_state);
 		FREE_AND_NULL(repo->remote_state);
+	}
+
+	if (repo->config_state) {
+		/* No config_state_clear() */
+		FREE_AND_NULL(repo->config_state);
 	}
 
 	repo_clear_path_cache(&repo->cached_paths);

@@ -14,6 +14,7 @@ struct raw_object_store;
 struct submodule_cache;
 struct promisor_remote_config;
 struct remote_state;
+struct config_state;
 
 enum untracked_cache_setting {
 	UNTRACKED_CACHE_KEEP,
@@ -137,6 +138,9 @@ struct repository {
 	 * ~/.gitconfig, XDG config file and the global /etc/gitconfig)
 	 */
 	struct config_set *config;
+
+	/* TODO Consider whether this should be here or in something global-er. */
+	struct config_state *config_state;
 
 	/* Repository's submodule config as defined by '.gitmodules' */
 	struct submodule_cache *submodule_cache;
