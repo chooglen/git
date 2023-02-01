@@ -1985,6 +1985,21 @@ int git_default_config(const char *var, const char *value, void *cb)
 	return 0;
 }
 
+static void config_source_init(struct config_source *source)
+{
+	source->linenr = 1;
+	source->eof = 0;
+	source->total_len = 0;
+	strbuf_init(&source->value, 1024);
+	strbuf_init(&source->var, 1024);
+}
+
+static void config_source_release(struct config_source *source)
+{
+	strbuf_release(&source->value);
+	strbuf_release(&source->var);
+}
+
 /*
  * All source specific fields in the union, die_on_error, name and the callbacks
  * fgetc, ungetc, ftell of top need to be initialized before calling
@@ -1996,22 +2011,30 @@ static int do_config_from(struct config_reader *reader,
 {
 	int ret;
 
-	/* push config-file parsing state stack */
-	top->linenr = 1;
-	top->eof = 0;
-	top->total_len = 0;
-	strbuf_init(&top->value, 1024);
-	strbuf_init(&top->var, 1024);
 	config_reader_push_source(reader, top);
 
 	ret = git_parse_source(top, fn, data, opts);
 
 	/* pop config-file parsing state stack */
-	strbuf_release(&top->value);
-	strbuf_release(&top->var);
+	config_source_release(top);
 	config_reader_pop_source(reader);
 
 	return ret;
+}
+
+static void config_source_init_file(struct config_source *source,
+				    const enum config_origin_type origin_type,
+				    const char *name, const char *path, FILE *f)
+{
+	config_source_init(source);
+	source->u.file = f;
+	source->origin_type = origin_type;
+	source->name = name;
+	source->path = path;
+	source->default_error_action = CONFIG_ERROR_DIE;
+	source->do_fgetc = config_file_fgetc;
+	source->do_ungetc = config_file_ungetc;
+	source->do_ftell = config_file_ftell;
 }
 
 static int do_config_from_file(struct config_reader *reader,
@@ -2023,15 +2046,7 @@ static int do_config_from_file(struct config_reader *reader,
 	struct config_source top = CONFIG_SOURCE_INIT;
 	int ret;
 
-	top.u.file = f;
-	top.origin_type = origin_type;
-	top.name = name;
-	top.path = path;
-	top.default_error_action = CONFIG_ERROR_DIE;
-	top.do_fgetc = config_file_fgetc;
-	top.do_ungetc = config_file_ungetc;
-	top.do_ftell = config_file_ftell;
-
+	config_source_init_file(&top, origin_type, name, path, f);
 	flockfile(f);
 	ret = do_config_from(reader, &top, fn, data, opts);
 	funlockfile(f);
@@ -2067,6 +2082,24 @@ int git_config_from_file(config_fn_t fn, const char *filename, void *data)
 	return git_config_from_file_with_options(fn, filename, data, NULL);
 }
 
+static void config_source_init_mem(struct config_source *source,
+				   const enum config_origin_type origin_type,
+				   const char *name, const char *buf,
+				   size_t len)
+{
+	config_source_init(source);
+	source->u.buf.buf = buf;
+	source->u.buf.len = len;
+	source->u.buf.pos = 0;
+	source->origin_type = origin_type;
+	source->name = name;
+	source->path = NULL;
+	source->default_error_action = CONFIG_ERROR_ERROR;
+	source->do_fgetc = config_buf_fgetc;
+	source->do_ungetc = config_buf_ungetc;
+	source->do_ftell = config_buf_ftell;
+}
+
 int git_config_from_mem(config_fn_t fn,
 			const enum config_origin_type origin_type,
 			const char *name, const char *buf, size_t len,
@@ -2074,17 +2107,7 @@ int git_config_from_mem(config_fn_t fn,
 {
 	struct config_source top = CONFIG_SOURCE_INIT;
 
-	top.u.buf.buf = buf;
-	top.u.buf.len = len;
-	top.u.buf.pos = 0;
-	top.origin_type = origin_type;
-	top.name = name;
-	top.path = NULL;
-	top.default_error_action = CONFIG_ERROR_ERROR;
-	top.do_fgetc = config_buf_fgetc;
-	top.do_ungetc = config_buf_ungetc;
-	top.do_ftell = config_buf_ftell;
-
+	config_source_init_mem(&top, origin_type, name, buf, len);
 	return do_config_from(&the_reader, &top, fn, data, opts);
 }
 
