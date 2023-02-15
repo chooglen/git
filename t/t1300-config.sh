@@ -1055,7 +1055,7 @@ test_expect_success 'check split_cmdline return' "
 	git config alias.split-cmdline-fix 'echo \"' &&
 	test_must_fail git split-cmdline-fix &&
 	echo foo > foo &&
-	git add foo &&
+	GIT_TRACE2=/tmp/trace git add foo &&
 	git commit -m 'initial commit' &&
 	git config branch.main.mergeoptions 'echo \"' &&
 	test_must_fail git merge main

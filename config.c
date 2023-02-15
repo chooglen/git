@@ -61,6 +61,13 @@ struct config_state {
 	 * config_state_pop_source().
 	 */
 	struct config_source *source;
+
+	/*
+	 * Config source information of the current, cached, config entry being
+	 * processed. This is only set when iterating through config in a
+	 * configset (TODO not while parsing a source).
+	 */
+	struct key_value_info *current_config_kvi;
 };
 
 struct config_state *config_state_new(void)
@@ -70,12 +77,6 @@ struct config_state *config_state_new(void)
 	memset(config_state, 0, sizeof(*config_state));
 	return config_state;
 }
-
-/*
- * Config source information of the current config entry being processed. This
- * is only set when iterating through config in a configset.
- */
-static struct key_value_info *current_config_kvi;
 
 /*
  * The "scope" of the current config source being parsed (repo, global, etc).
@@ -91,6 +92,8 @@ static enum config_scope current_parsing_scope;
 static inline void config_state_push_source(struct config_state *state,
 					    struct config_source *top)
 {
+	if (state->current_config_kvi)
+		BUG("Source should only be set when parsing a config source");
 	if (state->source)
 		top->prev = state->source;
 	state->source = top;
@@ -101,10 +104,18 @@ static inline struct config_source *config_state_pop_source(struct config_state 
 
 	struct config_source *ret;
 	if (!state->source)
+		/* TODO this wording is kinda weird */
 		BUG("Can't pop if you don't have anything");
 	ret = state->source;
 	state->source = state->source->prev;
 	return ret;
+}
+
+static inline void config_state_set_kvi(struct config_state *state, struct key_value_info *kvi)
+{
+	if (kvi && state->source)
+		BUG("kvi should only be set when iterating through configset");
+	state->current_config_kvi = kvi;
 }
 
 static int pack_compression_seen;
@@ -375,20 +386,17 @@ static void populate_remote_urls(struct config_include_data *inc)
 {
 	struct config_options opts;
 
-	struct key_value_info *store_kvi = current_config_kvi;
 	enum config_scope store_scope = current_parsing_scope;
 
 	opts = *inc->opts;
 	opts.unconditional_remote_url = 1;
 
-	current_config_kvi = NULL;
 	current_parsing_scope = 0;
 
 	inc->remote_urls = xmalloc(sizeof(*inc->remote_urls));
 	string_list_init_dup(inc->remote_urls);
 	config_with_options(add_remote_url, inc->remote_urls, inc->config_source, &opts);
 
-	current_config_kvi = store_kvi;
 	current_parsing_scope = store_scope;
 }
 
@@ -2252,26 +2260,34 @@ int config_with_options(config_fn_t fn, void *data,
 	return ret;
 }
 
+struct configset_iter_data {
+	struct config_state *config_state;
+	void *inner;
+};
+#define CONFIGSET_ITER_INIT { 0 }
+
 static void configset_iter(struct config_set *cs, config_fn_t fn, void *data)
 {
 	int i, value_index;
 	struct string_list *values;
 	struct config_set_element *entry;
 	struct configset_list *list = &cs->list;
+	struct configset_iter_data *iter_data = data;
 
 	for (i = 0; i < list->nr; i++) {
+		struct key_value_info *kvi;
 		entry = list->items[i].e;
 		value_index = list->items[i].value_index;
 		values = &entry->value_list;
 
-		current_config_kvi = values->items[value_index].util;
+		kvi = values->items[value_index].util;
+		config_state_set_kvi(iter_data->config_state, kvi);
 
-		if (fn(entry->key, values->items[value_index].string, data) < 0)
-			git_die_config_linenr(entry->key,
-					      current_config_kvi->filename,
-					      current_config_kvi->linenr);
+		if (fn(entry->key, values->items[value_index].string, iter_data->inner) < 0)
+			git_die_config_linenr(entry->key, kvi->filename,
+					      kvi->linenr);
 
-		current_config_kvi = NULL;
+		config_state_set_kvi(iter_data->config_state, NULL);
 	}
 }
 
@@ -2606,10 +2622,14 @@ static void repo_config_clear(struct repository *repo)
 	git_configset_clear(repo->config);
 }
 
-void repo_config(struct repository *repo, config_fn_t fn, void *data)
+void repo_config(struct repository *repo, config_fn_t fn, void *data_inner)
 {
+	struct configset_iter_data data = CONFIGSET_ITER_INIT;
+	data.inner = data_inner;
+	data.config_state = repo->config_state;
+
 	git_config_check_init(repo);
-	configset_iter(repo->config, fn, data);
+	configset_iter(repo->config, fn, &data);
 }
 
 int repo_config_get_value(struct repository *repo,
@@ -2711,11 +2731,15 @@ static void read_protected_config(void)
 	config_with_options(config_set_callback, &data, NULL, &opts);
 }
 
-void git_protected_config(config_fn_t fn, void *data)
+void git_protected_config(config_fn_t fn, void *data_inner)
 {
+	struct configset_iter_data data = CONFIGSET_ITER_INIT;
 	if (!protected_config.hash_initialized)
 		read_protected_config();
-	configset_iter(&protected_config, fn, data);
+	data.inner = data_inner;
+	data.config_state = the_repository->config_state;
+
+	configset_iter(&protected_config, fn, &data);
 }
 
 /* Functions used historically to read configuration from 'the_repository' */
@@ -3822,8 +3846,8 @@ int parse_config_key(const char *var,
 const char *current_config_origin_type(void)
 {
 	int type;
-	if (current_config_kvi)
-		type = current_config_kvi->origin_type;
+	if (the_repository->config_state->current_config_kvi)
+		type = the_repository->config_state->current_config_kvi->origin_type;
 	else if(the_repository->config_state->source)
 		type = the_repository->config_state->source->origin_type;
 	else
@@ -3868,8 +3892,8 @@ const char *config_scope_name(enum config_scope scope)
 const char *current_config_name(void)
 {
 	const char *name;
-	if (current_config_kvi)
-		name = current_config_kvi->filename;
+	if (the_repository->config_state->current_config_kvi)
+		name = the_repository->config_state->current_config_kvi->filename;
 	else if (the_repository->config_state->source)
 		name = the_repository->config_state->source->name;
 	else
@@ -3879,16 +3903,16 @@ const char *current_config_name(void)
 
 enum config_scope current_config_scope(void)
 {
-	if (current_config_kvi)
-		return current_config_kvi->scope;
+	if (the_repository->config_state->current_config_kvi)
+		return the_repository->config_state->current_config_kvi->scope;
 	else
 		return current_parsing_scope;
 }
 
 int current_config_line(void)
 {
-	if (current_config_kvi)
-		return current_config_kvi->linenr;
+	if (the_repository->config_state->current_config_kvi)
+		return the_repository->config_state->current_config_kvi->linenr;
 	else
 		return the_repository->config_state->source->linenr;
 }
