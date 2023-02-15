@@ -49,6 +49,7 @@ struct config_source {
 	int (*do_ungetc)(int c, struct config_source *conf);
 	long (*do_ftell)(struct config_source *c);
 };
+#define CONFIG_SOURCE_INIT { 0 }
 
 /*
  * These variables record the "current" config source, which
@@ -77,6 +78,24 @@ static struct key_value_info *current_config_kvi;
  * file (i.e., a file included from .git/config is still in "repo" scope).
  */
 static enum config_scope current_parsing_scope;
+
+static inline void config_state_push_source(struct config_source *top)
+{
+	if (cf)
+		top->prev = cf;
+	cf = top;
+}
+
+static inline struct config_source *config_state_pop_source()
+{
+
+	struct config_source *ret;
+	if (!cf)
+		BUG("Can't pop if you don't have anything");
+	ret = cf;
+	cf = cf->prev;
+	return ret;
+}
 
 static int pack_compression_seen;
 static int zlib_compression_seen;
@@ -345,14 +364,12 @@ static void populate_remote_urls(struct config_include_data *inc)
 {
 	struct config_options opts;
 
-	struct config_source *store_cf = cf;
 	struct key_value_info *store_kvi = current_config_kvi;
 	enum config_scope store_scope = current_parsing_scope;
 
 	opts = *inc->opts;
 	opts.unconditional_remote_url = 1;
 
-	cf = NULL;
 	current_config_kvi = NULL;
 	current_parsing_scope = 0;
 
@@ -360,7 +377,6 @@ static void populate_remote_urls(struct config_include_data *inc)
 	string_list_init_dup(inc->remote_urls);
 	config_with_options(add_remote_url, inc->remote_urls, inc->config_source, &opts);
 
-	cf = store_cf;
 	current_config_kvi = store_kvi;
 	current_parsing_scope = store_scope;
 }
@@ -714,12 +730,10 @@ int git_config_from_parameters(config_fn_t fn, void *data)
 	struct strvec to_free = STRVEC_INIT;
 	int ret = 0;
 	char *envw = NULL;
-	struct config_source source;
+	struct config_source source = CONFIG_SOURCE_INIT;
 
-	memset(&source, 0, sizeof(source));
-	source.prev = cf;
 	source.origin_type = CONFIG_ORIGIN_CMDLINE;
-	cf = &source;
+	config_state_push_source(&source);
 
 	env = getenv(CONFIG_COUNT_ENVIRONMENT);
 	if (env) {
@@ -777,7 +791,7 @@ out:
 	strbuf_release(&envvar);
 	strvec_clear(&to_free);
 	free(envw);
-	cf = source.prev;
+	config_state_pop_source();
 	return ret;
 }
 
@@ -1948,20 +1962,18 @@ static int do_config_from(struct config_source *top, config_fn_t fn, void *data,
 	int ret;
 
 	/* push config-file parsing state stack */
-	top->prev = cf;
 	top->linenr = 1;
 	top->eof = 0;
 	top->total_len = 0;
 	strbuf_init(&top->value, 1024);
 	strbuf_init(&top->var, 1024);
-	cf = top;
-
-	ret = git_parse_source(cf, fn, data, opts);
+	config_state_push_source(top);
+	ret = git_parse_source(top, fn, data, opts);
 
 	/* pop config-file parsing state stack */
 	strbuf_release(&top->value);
 	strbuf_release(&top->var);
-	cf = top->prev;
+	config_state_pop_source();
 
 	return ret;
 }
@@ -1971,7 +1983,7 @@ static int do_config_from_file(config_fn_t fn,
 		const char *name, const char *path, FILE *f,
 		void *data, const struct config_options *opts)
 {
-	struct config_source top;
+	struct config_source top = CONFIG_SOURCE_INIT;
 	int ret;
 
 	top.u.file = f;
@@ -2023,7 +2035,7 @@ int git_config_from_mem(config_fn_t fn,
 			const char *name, const char *buf, size_t len,
 			void *data, const struct config_options *opts)
 {
-	struct config_source top;
+	struct config_source top = CONFIG_SOURCE_INIT;
 
 	top.u.buf.buf = buf;
 	top.u.buf.len = len;
