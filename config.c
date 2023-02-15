@@ -52,30 +52,24 @@ struct config_source {
 #define CONFIG_SOURCE_INIT { 0 }
 
 /*
- * These variables record the "current" config source, which
- * can be accessed by parsing callbacks.
- *
- * The "cf" variable will be non-NULL only when we are actually parsing a real
- * config source (file, blob, cmdline, etc).
- *
- * The "current_config_kvi" variable will be non-NULL only when we are feeding
- * cached config from a configset into a callback.
- *
- * They should generally never be non-NULL at the same time. If they are both
- * NULL, then we aren't parsing anything (and depending on the function looking
- * at the variables, it's either a bug for it to be called in the first place,
- * or it's a function which can be reused for non-config purposes, and should
- * fall back to some sane behavior).
+ * The current config source being parsed. This is only set when parsing a
+ * config source (e.g. a blob or file).
  */
 static struct config_source *cf;
+/*
+ * Config source information of the current config entry being processed. This
+ * is only set when iterating through config in a configset.
+ */
 static struct key_value_info *current_config_kvi;
 
 /*
- * Similar to the variables above, this gives access to the "scope" of the
- * current value (repo, global, etc). For cached values, it can be found via
- * the current_config_kvi as above. During parsing, the current value can be
- * found in this variable. It's not part of "cf" because it transcends a single
- * file (i.e., a file included from .git/config is still in "repo" scope).
+ * The "scope" of the current config source being parsed (repo, global, etc).
+ * This is only set when parsing a config source (e.g. a blob or file). It's not
+ * part of "cf" because it transcends a single file (i.e., a file included from
+ * .git/config is still in "repo" scope).
+ *
+ * When iterating through a configset, the equivalent value is
+ * "current_config_kvi.scope" (see above).
  */
 static enum config_scope current_parsing_scope;
 
