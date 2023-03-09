@@ -1265,38 +1265,41 @@ int git_parse_ssize_t(const char *value, ssize_t *ret)
 	return 1;
 }
 
+static enum config_origin_type current_config_origin_type_enum(void);
 NORETURN
 static void die_bad_number(const char *name, const char *value)
 {
 	const char *error_type = (errno == ERANGE) ?
 		N_("out of range") : N_("invalid unit");
 	const char *bad_numeric = N_("bad numeric config value '%s' for '%s': %s");
+	const char *config_name = current_config_name();
+	enum config_origin_type config_origin = current_config_origin_type_enum();
 
 	if (!value)
 		value = "";
 
-	if (!(cf && cf->name))
+	if (!config_name)
 		die(_(bad_numeric), value, name, _(error_type));
 
-	switch (cf->origin_type) {
+	switch (config_origin) {
 	case CONFIG_ORIGIN_BLOB:
 		die(_("bad numeric config value '%s' for '%s' in blob %s: %s"),
-		    value, name, cf->name, _(error_type));
+		    value, name, config_name, _(error_type));
 	case CONFIG_ORIGIN_FILE:
 		die(_("bad numeric config value '%s' for '%s' in file %s: %s"),
-		    value, name, cf->name, _(error_type));
+		    value, name, config_name, _(error_type));
 	case CONFIG_ORIGIN_STDIN:
 		die(_("bad numeric config value '%s' for '%s' in standard input: %s"),
 		    value, name, _(error_type));
 	case CONFIG_ORIGIN_SUBMODULE_BLOB:
 		die(_("bad numeric config value '%s' for '%s' in submodule-blob %s: %s"),
-		    value, name, cf->name, _(error_type));
+		    value, name, config_name, _(error_type));
 	case CONFIG_ORIGIN_CMDLINE:
 		die(_("bad numeric config value '%s' for '%s' in command line %s: %s"),
-		    value, name, cf->name, _(error_type));
+		    value, name, config_name, _(error_type));
 	default:
 		die(_("bad numeric config value '%s' for '%s' in %s: %s"),
-		    value, name, cf->name, _(error_type));
+		    value, name, config_name, _(error_type));
 	}
 }
 
@@ -3766,7 +3769,7 @@ int parse_config_key(const char *var,
 	return 0;
 }
 
-const char *current_config_origin_type(void)
+static enum config_origin_type current_config_origin_type_enum(void)
 {
 	int type;
 	if (current_config_kvi)
@@ -3775,6 +3778,12 @@ const char *current_config_origin_type(void)
 		type = cf->origin_type;
 	else
 		BUG("current_config_origin_type called outside config callback");
+	return type;
+}
+
+const char *current_config_origin_type(void)
+{
+	enum config_origin_type type = current_config_origin_type_enum();
 
 	switch (type) {
 	case CONFIG_ORIGIN_BLOB:

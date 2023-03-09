@@ -131,7 +131,9 @@ test_expect_success 'check line error when NULL string is queried' '
 '
 
 test_expect_success 'find integer if value is non parse-able' '
-	check_config expect_code 128 get_int lamb.head
+	check_config expect_code 128 get_int lamb.head 2>result &&
+	# check_config expect_code 99 get_int lamb.head 2>result &&
+	grep "fatal: bad numeric config value .* in \.git/config" result
 '
 
 test_expect_success 'find bool value for the entered key' '
