@@ -123,6 +123,20 @@ static inline void config_reader_set_scope(struct config_reader *reader,
 	reader->parsing_scope = scope;
 }
 
+/*
+ * These are called before and after parsing config. We need to update
+ * the_reader so that we can read its state during the parsing.
+ */
+static inline void the_reader_push_source(struct config_source *source)
+{
+	config_reader_push_source(&the_reader, source);
+}
+
+static inline void the_reader_pop_source(struct config_source *source UNUSED)
+{
+	config_reader_pop_source(&the_reader);
+}
+
 static int pack_compression_seen;
 static int zlib_compression_seen;
 
@@ -2005,19 +2019,21 @@ static void config_source_release(struct config_source *source)
  * fgetc, ungetc, ftell of top need to be initialized before calling
  * this function.
  */
-static int do_config_from(struct config_reader *reader,
-			  struct config_source *top, config_fn_t fn, void *data,
-			  const struct config_options *opts)
+static int do_config_from(struct config_source *top, config_fn_t fn, void *data,
+			  const struct config_options *opts,
+			  config_parser_source_event_fn_t before_parse,
+			  config_parser_source_event_fn_t after_parse)
 {
 	int ret;
 
-	config_reader_push_source(reader, top);
+	if (before_parse)
+		before_parse(top);
 
 	ret = git_parse_source(top, fn, data, opts);
 
-	/* pop config-file parsing state stack */
+	if (after_parse)
+		after_parse(top);
 	config_source_release(top);
-	config_reader_pop_source(reader);
 
 	return ret;
 }
@@ -2037,31 +2053,43 @@ static void config_source_init_file(struct config_source *source,
 	source->do_ftell = config_file_ftell;
 }
 
-static int do_config_from_file(struct config_reader *reader,
-			       config_fn_t fn,
+static int do_config_from_file(config_fn_t fn,
 			       const enum config_origin_type origin_type,
 			       const char *name, const char *path, FILE *f,
-			       void *data, const struct config_options *opts)
+			       void *data, const struct config_options *opts,
+			       config_parser_source_event_fn_t before_parse,
+			       config_parser_source_event_fn_t after_parse)
 {
 	struct config_source top = CONFIG_SOURCE_INIT;
 	int ret;
 
 	config_source_init_file(&top, origin_type, name, path, f);
 	flockfile(f);
-	ret = do_config_from(reader, &top, fn, data, opts);
+	ret = do_config_from(&top, fn, data, opts, before_parse, after_parse);
 	funlockfile(f);
 	return ret;
 }
 
-static int git_config_from_stdin(config_fn_t fn, void *data)
+static int git_config_from_stdin_lib(config_fn_t fn, void *data,
+				 config_parser_source_event_fn_t before_parse,
+				 config_parser_source_event_fn_t after_parse)
 {
-	return do_config_from_file(&the_reader, fn, CONFIG_ORIGIN_STDIN, "",
-				   NULL, stdin, data, NULL);
+	return do_config_from_file(fn, CONFIG_ORIGIN_STDIN, "", NULL, stdin,
+				   data, NULL, before_parse, after_parse);
 }
 
-int git_config_from_file_with_options(config_fn_t fn, const char *filename,
-				      void *data,
-				      const struct config_options *opts)
+static int git_config_from_stdin(config_fn_t fn, void *data)
+{
+	return git_config_from_stdin_lib(fn, data, the_reader_push_source,
+					 the_reader_pop_source);
+}
+
+static int git_config_from_file_with_options_lib(config_fn_t fn,
+						 const char *filename,
+						 void *data,
+						 const struct config_options *opts,
+						 config_parser_source_event_fn_t before_parse,
+						 config_parser_source_event_fn_t after_parse)
 {
 	int ret = -1;
 	FILE *f;
@@ -2070,11 +2098,22 @@ int git_config_from_file_with_options(config_fn_t fn, const char *filename,
 		BUG("filename cannot be NULL");
 	f = fopen_or_warn(filename, "r");
 	if (f) {
-		ret = do_config_from_file(&the_reader, fn, CONFIG_ORIGIN_FILE,
-					  filename, filename, f, data, opts);
+		ret = do_config_from_file(fn, CONFIG_ORIGIN_FILE, filename,
+					  filename, f, data, opts, before_parse,
+					  after_parse);
 		fclose(f);
 	}
 	return ret;
+}
+
+
+int git_config_from_file_with_options(config_fn_t fn, const char *filename,
+				      void *data,
+				      const struct config_options *opts_p)
+{
+	return git_config_from_file_with_options_lib(fn, filename, data, opts_p,
+						     the_reader_push_source,
+						     the_reader_pop_source);
 }
 
 int git_config_from_file(config_fn_t fn, const char *filename, void *data)
@@ -2100,15 +2139,32 @@ static void config_source_init_mem(struct config_source *source,
 	source->do_ftell = config_buf_ftell;
 }
 
+static int git_config_from_mem_lib(config_fn_t fn,
+				   const enum config_origin_type origin_type,
+				   const char *name, const char *buf,
+				   size_t len, void *data,
+				   const struct config_options *opts,
+				   config_parser_source_event_fn_t before_parse,
+				   config_parser_source_event_fn_t after_parse)
+{
+	int ret;
+	struct config_source top = CONFIG_SOURCE_INIT;
+
+	config_source_init_mem(&top, origin_type, name, buf, len);
+
+	ret = do_config_from(&top, fn, data, opts, before_parse, after_parse);
+
+	return ret;
+}
+
 int git_config_from_mem(config_fn_t fn,
 			const enum config_origin_type origin_type,
 			const char *name, const char *buf, size_t len,
 			void *data, const struct config_options *opts)
 {
-	struct config_source top = CONFIG_SOURCE_INIT;
-
-	config_source_init_mem(&top, origin_type, name, buf, len);
-	return do_config_from(&the_reader, &top, fn, data, opts);
+	return git_config_from_mem_lib(fn, origin_type, name, buf, len, data,
+				       opts, the_reader_push_source,
+				       the_reader_pop_source);
 }
 
 int git_config_from_blob_oid(config_fn_t fn,

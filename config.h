@@ -73,6 +73,15 @@ enum config_event_t {
 	CONFIG_EVENT_ERROR
 };
 
+struct config_source;
+/*
+ * Called when the config source is initialized (just before parsing) and when
+ * the parser done with it. This gives callers a chance to store a reference to
+ * the config_source to read relevant properties, e.g. reading the line number
+ * to give helpful diagnostics to users.
+ */
+typedef void(*config_parser_source_event_fn_t)(struct config_source *);
+
 /*
  * The parser event function (if not NULL) is called with the event type and
  * the begin/end offsets of the parsed elements.
@@ -101,6 +110,12 @@ struct config_options {
 
 	const char *commondir;
 	const char *git_dir;
+	/*
+	 * FIXME I'd have loved to put the before_parse() and after_parse()
+	 * functions on this struct, but it's quite badly overloaded, e.g. all
+	 * of the options above are only used by config_with_options(). Perhaps
+	 * I'll do this after some refactoring.
+	 */
 	config_parser_event_fn_t event_fn;
 	void *event_fn_data;
 	enum config_error_action {
