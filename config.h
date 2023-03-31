@@ -109,6 +109,12 @@ struct config_options {
 		CONFIG_ERROR_ERROR, /* error() on error, return -1 */
 		CONFIG_ERROR_SILENT, /* return -1 */
 	} error_action;
+
+	/*
+	 * For internal use. The scope to use during parsing.
+	 * External callers should set "struct git_config_source".scope.
+	 */
+	enum config_scope scope;
 };
 
 /**
