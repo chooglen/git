@@ -789,7 +789,9 @@ static int git_clone_config(const char *k, const char *v, void *cb)
 	return git_default_config(k, v, cb);
 }
 
-static int write_one_config(const char *key, const char *value, void *data)
+static int write_one_config(const char *key, const char *value,
+			    struct key_value_info *kvi UNUSED,
+			    void *data)
 {
 	/*
 	 * give git_clone_config a chance to write config values back to the

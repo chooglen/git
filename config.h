@@ -117,6 +117,13 @@ struct config_options {
 	enum config_scope scope;
 };
 
+struct key_value_info {
+	const char *filename;
+	int linenr;
+	enum config_origin_type origin_type;
+	enum config_scope scope;
+};
+
 /**
  * A config callback function takes three parameters:
  *
@@ -136,6 +143,7 @@ struct config_options {
  * could not be parsed properly.
  */
 typedef int (*config_fn_t)(const char *, const char *, void *);
+typedef int (*config_kvi_fn_t)(const char *, const char *, struct key_value_info *, void *);
 
 int git_default_config(const char *, const char *, void *);
 
@@ -160,7 +168,6 @@ int git_config_from_blob_oid(config_fn_t fn, const char *name,
 			     const struct object_id *oid, void *data);
 void git_config_push_parameter(const char *text);
 void git_config_push_env(const char *spec);
-int git_config_from_parameters(config_fn_t fn, void *data);
 void read_early_config(config_fn_t cb, void *data);
 void read_very_early_config(config_fn_t cb, void *data);
 
@@ -360,7 +367,7 @@ int config_error_nonbool(const char *);
 char *git_system_config(void);
 void git_global_config(char **user, char **xdg);
 
-int git_config_parse_parameter(const char *, config_fn_t fn, void *data);
+int git_config_parse_parameter(const char *, config_kvi_fn_t fn, void *data);
 
 enum config_scope current_config_scope(void);
 const char *current_config_origin_type(void);
@@ -672,13 +679,6 @@ int git_config_get_expiry(const char *key, const char **output);
 
 /* parse either "this many days" integer, or "5.days.ago" approxidate */
 int git_config_get_expiry_in_days(const char *key, timestamp_t *, timestamp_t now);
-
-struct key_value_info {
-	const char *filename;
-	int linenr;
-	enum config_origin_type origin_type;
-	enum config_scope scope;
-};
 
 /**
  * First prints the error message specified by the caller in `err` and then
