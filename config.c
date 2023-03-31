@@ -43,6 +43,7 @@ struct config_source {
 		} buf;
 	} u;
 	enum config_origin_type origin_type;
+	enum config_scope scope;
 	const char *name;
 	const char *path;
 	enum config_error_action default_error_action;
@@ -78,16 +79,6 @@ struct config_reader {
 	 */
 	struct config_source *source;
 	struct key_value_info *config_kvi;
-	/*
-	 * The "scope" of the current config source being parsed (repo, global,
-	 * etc). Like "source", this is only set when parsing a config source.
-	 * It's not part of "source" because it transcends a single file (i.e.,
-	 * a file included from .git/config is still in "repo" scope).
-	 *
-	 * When iterating through a configset, the equivalent value is
-	 * "config_kvi.scope" (see above).
-	 */
-	enum config_scope parsing_scope;
 };
 /*
  * Where possible, prefer to accept "struct config_reader" as an arg than to use
@@ -118,17 +109,9 @@ static inline struct config_source *config_reader_pop_source(struct config_reade
 static inline void config_reader_set_kvi(struct config_reader *reader,
 					 struct key_value_info *kvi)
 {
-	if (kvi && (reader->source || reader->parsing_scope))
+	if (kvi && reader->source)
 		BUG("kvi should not be set while parsing a config source");
 	reader->config_kvi = kvi;
-}
-
-static inline void config_reader_set_scope(struct config_reader *reader,
-					   enum config_scope scope)
-{
-	if (scope && reader->config_kvi)
-		BUG("scope should only be set when iterating through a config source");
-	reader->parsing_scope = scope;
 }
 
 static int pack_compression_seen;
@@ -245,12 +228,16 @@ static int handle_path_include(struct config_source *cs, const char *path,
 	}
 
 	if (!access_or_die(path, R_OK, 0)) {
+		struct config_options scope_opts = {
+			.scope = cs->scope,
+		};
 		if (++inc->depth > MAX_INCLUDE_DEPTH)
 			die(_(include_depth_advice), MAX_INCLUDE_DEPTH, path,
 			    !cs ? "<unknown>" :
 			    cs->name ? cs->name :
 			    "the command line");
-		ret = git_config_from_file(git_config_include, path, inc);
+		ret = git_config_from_file_with_options(git_config_include,
+							path, inc, &scope_opts);
 		inc->depth--;
 	}
 cleanup:
@@ -399,18 +386,12 @@ static void populate_remote_urls(struct config_include_data *inc)
 {
 	struct config_options opts;
 
-	enum config_scope store_scope = inc->config_reader->parsing_scope;
-
 	opts = *inc->opts;
 	opts.unconditional_remote_url = 1;
-
-	config_reader_set_scope(inc->config_reader, 0);
 
 	inc->remote_urls = xmalloc(sizeof(*inc->remote_urls));
 	string_list_init_dup(inc->remote_urls);
 	config_with_options(add_remote_url, inc->remote_urls, inc->config_source, &opts);
-
-	config_reader_set_scope(inc->config_reader, store_scope);
 }
 
 static int forbid_remote_url(const char *var, const char *value UNUSED,
@@ -763,7 +744,9 @@ int git_config_from_parameters(config_fn_t fn, void *data)
 	struct strvec to_free = STRVEC_INIT;
 	int ret = 0;
 	char *envw = NULL;
-	struct config_source source = CONFIG_SOURCE_INIT;
+	struct config_source source = {
+		.scope = CONFIG_SCOPE_COMMAND,
+	};
 
 	source.origin_type = CONFIG_ORIGIN_CMDLINE;
 	config_reader_push_source(&the_reader, &source);
@@ -2010,6 +1993,8 @@ static int do_config_from(struct config_reader *reader,
 	top->total_len = 0;
 	strbuf_init(&top->value, 1024);
 	strbuf_init(&top->var, 1024);
+	if (opts)
+		top->scope = opts->scope;
 	config_reader_push_source(reader, top);
 
 	ret = git_parse_source(top, fn, data, opts);
@@ -2046,10 +2031,11 @@ static int do_config_from_file(struct config_reader *reader,
 	return ret;
 }
 
-static int git_config_from_stdin(config_fn_t fn, void *data)
+static int git_config_from_stdin(config_fn_t fn, void *data,
+				 struct config_options *opts)
 {
 	return do_config_from_file(&the_reader, fn, CONFIG_ORIGIN_STDIN, "",
-				   NULL, stdin, data, NULL);
+				   NULL, stdin, data, opts);
 }
 
 int git_config_from_file_with_options(config_fn_t fn, const char *filename,
@@ -2096,11 +2082,12 @@ int git_config_from_mem(config_fn_t fn,
 	return do_config_from(&the_reader, &top, fn, data, opts);
 }
 
-int git_config_from_blob_oid(config_fn_t fn,
-			      const char *name,
-			      struct repository *repo,
-			      const struct object_id *oid,
-			      void *data)
+static int git_config_from_blob_oid_with_options(config_fn_t fn,
+						 const char *name,
+						 struct repository *repo,
+						 const struct object_id *oid,
+						 void *data,
+						 struct config_options *opts)
 {
 	enum object_type type;
 	char *buf;
@@ -2116,22 +2103,33 @@ int git_config_from_blob_oid(config_fn_t fn,
 	}
 
 	ret = git_config_from_mem(fn, CONFIG_ORIGIN_BLOB, name, buf, size,
-				  data, NULL);
+				  data, opts);
 	free(buf);
 
 	return ret;
 }
 
+int git_config_from_blob_oid(config_fn_t fn,
+			      const char *name,
+			      struct repository *repo,
+			      const struct object_id *oid,
+			      void *data)
+{
+	return git_config_from_blob_oid_with_options(fn, name, repo,
+						     oid, data, NULL);
+}
+
 static int git_config_from_blob_ref(config_fn_t fn,
 				    struct repository *repo,
 				    const char *name,
-				    void *data)
+				    void *data,
+				    struct config_options *opts)
 {
 	struct object_id oid;
 
 	if (repo_get_oid(repo, name, &oid) < 0)
 		return error(_("unable to resolve config blob '%s'"), name);
-	return git_config_from_blob_oid(fn, name, repo, &oid, data);
+	return git_config_from_blob_oid_with_options(fn, name, repo, &oid, data, opts);
 }
 
 char *git_system_config(void)
@@ -2193,7 +2191,7 @@ static int do_git_config_sequence(struct config_reader *reader,
 	char *xdg_config = NULL;
 	char *user_config = NULL;
 	char *repo_config;
-	enum config_scope prev_parsing_scope = reader->parsing_scope;
+	struct config_options scope_opts = { 0 };
 
 	if (opts->commondir)
 		repo_config = mkpathdup("%s/config", opts->commondir);
@@ -2202,39 +2200,42 @@ static int do_git_config_sequence(struct config_reader *reader,
 	else
 		repo_config = NULL;
 
-	config_reader_set_scope(reader, CONFIG_SCOPE_SYSTEM);
+	scope_opts.scope = CONFIG_SCOPE_SYSTEM;
 	if (git_config_system() && system_config &&
 	    !access_or_die(system_config, R_OK,
 			   opts->system_gently ? ACCESS_EACCES_OK : 0))
-		ret += git_config_from_file(fn, system_config, data);
+		ret += git_config_from_file_with_options(fn, system_config,
+							 data, &scope_opts);
 
-	config_reader_set_scope(reader, CONFIG_SCOPE_GLOBAL);
+
+	scope_opts.scope = CONFIG_SCOPE_GLOBAL;
 	git_global_config(&user_config, &xdg_config);
 
 	if (xdg_config && !access_or_die(xdg_config, R_OK, ACCESS_EACCES_OK))
-		ret += git_config_from_file(fn, xdg_config, data);
+		ret += git_config_from_file_with_options(fn, xdg_config, data,
+							 &scope_opts);
 
 	if (user_config && !access_or_die(user_config, R_OK, ACCESS_EACCES_OK))
-		ret += git_config_from_file(fn, user_config, data);
+		ret += git_config_from_file_with_options(fn, user_config, data,
+							 &scope_opts);
 
-	config_reader_set_scope(reader, CONFIG_SCOPE_LOCAL);
+	scope_opts.scope = CONFIG_SCOPE_LOCAL;
 	if (!opts->ignore_repo && repo_config &&
 	    !access_or_die(repo_config, R_OK, 0))
-		ret += git_config_from_file(fn, repo_config, data);
+		ret += git_config_from_file_with_options(fn, repo_config, data,
+							 &scope_opts);
 
-	config_reader_set_scope(reader, CONFIG_SCOPE_WORKTREE);
+	scope_opts.scope = CONFIG_SCOPE_WORKTREE;
 	if (!opts->ignore_worktree && repository_format_worktree_config) {
 		char *path = git_pathdup("config.worktree");
 		if (!access_or_die(path, R_OK, 0))
-			ret += git_config_from_file(fn, path, data);
+			ret += git_config_from_file_with_options(fn, path, data, &scope_opts);
 		free(path);
 	}
 
-	config_reader_set_scope(reader, CONFIG_SCOPE_COMMAND);
 	if (!opts->ignore_cmdline && git_config_from_parameters(fn, data) < 0)
 		die(_("unable to parse command-line config"));
 
-	config_reader_set_scope(reader, prev_parsing_scope);
 	free(system_config);
 	free(xdg_config);
 	free(user_config);
@@ -2247,8 +2248,8 @@ int config_with_options(config_fn_t fn, void *data,
 			const struct config_options *opts)
 {
 	struct config_include_data inc = CONFIG_INCLUDE_INIT;
-	enum config_scope prev_scope = the_reader.parsing_scope;
 	int ret;
+	struct config_options scope_opts = { 0 };
 
 	if (opts->respect_includes) {
 		inc.fn = fn;
@@ -2260,22 +2261,28 @@ int config_with_options(config_fn_t fn, void *data,
 		data = &inc;
 	}
 
+	/*
+	 * Normally, only the files and cmdline have a scope, but
+	 * "git config" will specifically set CONFIG_SCOPE_COMMAND for
+	 * config sources specified on the CLI.
+	 */
 	if (config_source)
-		config_reader_set_scope(&the_reader, config_source->scope);
+		scope_opts.scope = config_source->scope;
 
 	/*
 	 * If we have a specific filename, use it. Otherwise, follow the
 	 * regular lookup sequence.
 	 */
 	if (config_source && config_source->use_stdin) {
-		ret = git_config_from_stdin(fn, data);
+		ret = git_config_from_stdin(fn, data, &scope_opts);
 	} else if (config_source && config_source->file) {
-		ret = git_config_from_file(fn, config_source->file, data);
+		ret = git_config_from_file_with_options(fn, config_source->file, data,
+							&scope_opts);
 	} else if (config_source && config_source->blob) {
 		struct repository *repo = config_source->repo ?
 			config_source->repo : the_repository;
 		ret = git_config_from_blob_ref(fn, repo, config_source->blob,
-						data);
+					       data, &scope_opts);
 	} else {
 		ret = do_git_config_sequence(&the_reader, opts, fn, data);
 	}
@@ -2284,7 +2291,6 @@ int config_with_options(config_fn_t fn, void *data,
 		string_list_clear(inc.remote_urls, 0);
 		FREE_AND_NULL(inc.remote_urls);
 	}
-	config_reader_set_scope(&the_reader, prev_scope);
 	return ret;
 }
 
@@ -2384,7 +2390,7 @@ static int configset_find_element(struct config_set *set, const char *key,
 	return 0;
 }
 
-static int configset_add_value(struct config_reader *reader,
+static int configset_add_value(struct config_source *cs,
 			       struct config_set *set, const char *key,
 			       const char *value)
 {
@@ -2415,19 +2421,19 @@ static int configset_add_value(struct config_reader *reader,
 	l_item->e = e;
 	l_item->value_index = e->value_list.nr - 1;
 
-	if (!reader->source)
+	if (!cs)
 		BUG("configset_add_value has no source");
-	if (reader->source->name) {
-		kv_info->filename = strintern(reader->source->name);
-		kv_info->linenr = reader->source->linenr;
-		kv_info->origin_type = reader->source->origin_type;
+	if (cs->name) {
+		kv_info->filename = strintern(cs->name);
+		kv_info->linenr = cs->linenr;
+		kv_info->origin_type = cs->origin_type;
 	} else {
 		/* for values read from `git_config_from_parameters()` */
 		kv_info->filename = NULL;
 		kv_info->linenr = -1;
 		kv_info->origin_type = CONFIG_ORIGIN_CMDLINE;
 	}
-	kv_info->scope = reader->parsing_scope;
+	kv_info->scope = cs->scope;
 	si->util = kv_info;
 
 	return 0;
@@ -2484,7 +2490,7 @@ struct configset_add_data {
 static int config_set_callback(const char *key, const char *value, void *cb)
 {
 	struct configset_add_data *data = cb;
-	configset_add_value(data->config_reader, data->config_set, key, value);
+	configset_add_value(data->config_reader->source, data->config_set, key, value);
 	return 0;
 }
 
@@ -4010,7 +4016,7 @@ enum config_scope current_config_scope(void)
 	if (the_reader.config_kvi)
 		return the_reader.config_kvi->scope;
 	else
-		return the_reader.parsing_scope;
+		return the_reader.source->scope;
 }
 
 int current_config_line(void)
