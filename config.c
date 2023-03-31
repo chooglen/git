@@ -102,6 +102,18 @@ static inline void config_reader_set_kvi(struct config_reader *reader,
 	reader->config_kvi = kvi;
 }
 
+struct adapt_non_kvi_data {
+	config_fn_t fn;
+	void *data;
+};
+
+static int adapt_non_kvi(const char *var, const char *value,
+			 struct key_value_info *kvi UNUSED, void *data)
+{
+	struct adapt_non_kvi_data *adapt = data;
+	return adapt->fn(var, value, adapt->data);
+}
+
 static int pack_compression_seen;
 static int zlib_compression_seen;
 
@@ -630,7 +642,8 @@ out_free_ret_1:
 }
 
 static int config_parse_pair(const char *key, const char *value,
-			  config_fn_t fn, void *data)
+			     struct key_value_info *kvi,
+			     config_kvi_fn_t fn, void *data)
 {
 	char *canonical_name;
 	int ret;
@@ -640,17 +653,30 @@ static int config_parse_pair(const char *key, const char *value,
 	if (git_config_parse_key(key, &canonical_name, NULL))
 		return -1;
 
-	ret = (fn(canonical_name, value, data) < 0) ? -1 : 0;
+	ret = (fn(canonical_name, value, kvi, data) < 0) ? -1 : 0;
 	free(canonical_name);
 	return ret;
 }
 
+
+/* for values read from `git_config_from_parameters()` */
+static void kvi_from_param(struct key_value_info *out)
+{
+	out->filename = NULL;
+	out->linenr = -1;
+	out->origin_type = CONFIG_ORIGIN_CMDLINE;
+	out->scope = CONFIG_SCOPE_COMMAND;
+}
+
 int git_config_parse_parameter(const char *text,
-			       config_fn_t fn, void *data)
+			       config_kvi_fn_t fn, void *data)
 {
 	const char *value;
 	struct strbuf **pair;
 	int ret;
+	struct key_value_info kvi = { 0 };
+
+	kvi_from_param(&kvi);
 
 	pair = strbuf_split_str(text, '=', 2);
 	if (!pair[0])
@@ -669,12 +695,13 @@ int git_config_parse_parameter(const char *text,
 		return error(_("bogus config parameter: %s"), text);
 	}
 
-	ret = config_parse_pair(pair[0]->buf, value, fn, data);
+	ret = config_parse_pair(pair[0]->buf, value, &kvi, fn, data);
 	strbuf_list_free(pair);
 	return ret;
 }
 
-static int parse_config_env_list(char *env, config_fn_t fn, void *data)
+static int parse_config_env_list(char *env, struct key_value_info *kvi,
+				 config_kvi_fn_t fn, void *data)
 {
 	char *cur = env;
 	while (cur && *cur) {
@@ -708,7 +735,7 @@ static int parse_config_env_list(char *env, config_fn_t fn, void *data)
 					     CONFIG_DATA_ENVIRONMENT);
 			}
 
-			if (config_parse_pair(key, value, fn, data) < 0)
+			if (config_parse_pair(key, value, kvi, fn, data) < 0)
 				return -1;
 		}
 		else {
@@ -725,16 +752,18 @@ static int parse_config_env_list(char *env, config_fn_t fn, void *data)
 	return 0;
 }
 
-int git_config_from_parameters(config_fn_t fn, void *data)
+static int git_config_from_parameters(config_kvi_fn_t fn, void *data)
 {
 	const char *env;
 	struct strbuf envvar = STRBUF_INIT;
 	struct strvec to_free = STRVEC_INIT;
 	int ret = 0;
 	char *envw = NULL;
-	struct config_source source = {
-		.scope = CONFIG_SCOPE_COMMAND,
-	};
+	struct config_source source = { 0 };
+	struct key_value_info kvi = { 0 };
+
+	kvi_from_param(&kvi);
+	config_reader_set_kvi(&the_reader, &kvi);
 
 	source.origin_type = CONFIG_ORIGIN_CMDLINE;
 	config_reader_push_source(&the_reader, &source);
@@ -774,7 +803,7 @@ int git_config_from_parameters(config_fn_t fn, void *data)
 			}
 			strbuf_reset(&envvar);
 
-			if (config_parse_pair(key, value, fn, data) < 0) {
+			if (config_parse_pair(key, value, &kvi, fn, data) < 0) {
 				ret = -1;
 				goto out;
 			}
@@ -785,7 +814,7 @@ int git_config_from_parameters(config_fn_t fn, void *data)
 	if (env) {
 		/* sq_dequote will write over it */
 		envw = xstrdup(env);
-		if (parse_config_env_list(envw, fn, data) < 0) {
+		if (parse_config_env_list(envw, &kvi, fn, data) < 0) {
 			ret = -1;
 			goto out;
 		}
@@ -795,6 +824,7 @@ out:
 	strbuf_release(&envvar);
 	strvec_clear(&to_free);
 	free(envw);
+	config_reader_set_kvi(&the_reader, NULL);
 	config_reader_pop_source(&the_reader);
 	return ret;
 }
@@ -1028,6 +1058,16 @@ static int do_event(struct config_source *cs, enum config_event_t type,
 
 	return 0;
 }
+
+static void kvi_from_source(struct config_source *cs,
+			    struct key_value_info *out)
+{
+	out->filename = strintern(cs->name);
+	out->linenr = cs->linenr;
+	out->origin_type = cs->origin_type;
+	out->scope = cs->scope;
+}
+
 
 static int git_parse_source(struct config_source *cs, config_fn_t fn,
 			    void *data, const struct config_options *opts)
@@ -2221,8 +2261,14 @@ static int do_git_config_sequence(struct config_reader *reader,
 		free(path);
 	}
 
-	if (!opts->ignore_cmdline && git_config_from_parameters(fn, data) < 0)
-		die(_("unable to parse command-line config"));
+	if (!opts->ignore_cmdline) {
+		struct adapt_non_kvi_data adapt = {
+			.fn = fn,
+			.data = data,
+		};
+		if (git_config_from_parameters(adapt_non_kvi, &adapt) < 0)
+			die(_("unable to parse command-line config"));
+	}
 
 	free(system_config);
 	free(xdg_config);
@@ -2402,17 +2448,10 @@ static int configset_add_value(struct config_source *cs,
 
 	if (!cs)
 		BUG("configset_add_value has no source");
-	if (cs->name) {
-		kv_info->filename = strintern(cs->name);
-		kv_info->linenr = cs->linenr;
-		kv_info->origin_type = cs->origin_type;
-	} else {
-		/* for values read from `git_config_from_parameters()` */
-		kv_info->filename = NULL;
-		kv_info->linenr = -1;
-		kv_info->origin_type = CONFIG_ORIGIN_CMDLINE;
-	}
-	kv_info->scope = cs->scope;
+	if (cs->name)
+		kvi_from_source(cs, kv_info);
+	else
+		kvi_from_param(kv_info);
 	si->util = kv_info;
 
 	return 0;
