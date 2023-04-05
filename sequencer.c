@@ -2876,7 +2876,8 @@ static int git_config_string_dup(char **dest,
 	return 0;
 }
 
-static int populate_opts_cb(const char *key, const char *value, void *data)
+static int populate_opts_cb(const char *key, const char *value,
+			    struct key_value_info *kvi UNUSED, void *data)
 {
 	struct replay_opts *opts = data;
 	int error_flag = 1;

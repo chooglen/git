@@ -223,7 +223,8 @@ static int bundle_list_update(const char *key, const char *value,
 	return 0;
 }
 
-static int config_to_bundle_list(const char *key, const char *value, void *data)
+static int config_to_bundle_list(const char *key, const char *value,
+				 struct key_value_info *kvi UNUSED, void *data)
 {
 	struct bundle_list *list = data;
 	return bundle_list_update(key, value, list);

@@ -1162,7 +1162,8 @@ struct fsck_gitmodules_data {
 	int ret;
 };
 
-static int fsck_gitmodules_fn(const char *var, const char *value, void *vdata)
+static int fsck_gitmodules_fn(const char *var, const char *value,
+			      struct key_value_info *kvi UNUSED, void *vdata)
 {
 	struct fsck_gitmodules_data *data = vdata;
 	const char *subsection, *key;

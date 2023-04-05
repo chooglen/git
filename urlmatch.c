@@ -551,7 +551,8 @@ static int cmp_matches(const struct urlmatch_item *a,
 	return 0;
 }
 
-int urlmatch_config_entry(const char *var, const char *value, void *cb)
+int urlmatch_config_entry(const char *var, const char *value,
+			  struct key_value_info *kvi, void *cb)
 {
 	struct string_list_item *item;
 	struct urlmatch_config *collect = cb;
@@ -613,6 +614,11 @@ int urlmatch_config_entry(const char *var, const char *value, void *cb)
 
 	strbuf_release(&synthkey);
 	return retval;
+}
+
+int urlmatch_config_entry_nonkvi(const char *var, const char *value, void *cb)
+{
+	return urlmatch_config_entry(var, value, NULL, cb);
 }
 
 void urlmatch_config_release(struct urlmatch_config *config)

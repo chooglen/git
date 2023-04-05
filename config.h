@@ -153,23 +153,23 @@ int git_default_config(const char *, const char *, void *);
  *
  * Unlike git_config(), this function does not respect includes.
  */
-int git_config_from_file(config_fn_t fn, const char *, void *);
+int git_config_from_file(config_kvi_fn_t fn, const char *, void *);
 
-int git_config_from_file_with_options(config_fn_t fn, const char *,
+int git_config_from_file_with_options(config_kvi_fn_t fn, const char *,
 				      void *,
 				      const struct config_options *);
-int git_config_from_mem(config_fn_t fn,
+int git_config_from_mem(config_kvi_fn_t fn,
 			const enum config_origin_type,
 			const char *name,
 			const char *buf, size_t len,
 			void *data, const struct config_options *opts);
-int git_config_from_blob_oid(config_fn_t fn, const char *name,
+int git_config_from_blob_oid(config_kvi_fn_t fn, const char *name,
 			     struct repository *repo,
 			     const struct object_id *oid, void *data);
 void git_config_push_parameter(const char *text);
 void git_config_push_env(const char *spec);
-void read_early_config(config_fn_t cb, void *data);
-void read_very_early_config(config_fn_t cb, void *data);
+void read_early_config(config_kvi_fn_t cb, void *data);
+void read_very_early_config(config_kvi_fn_t cb, void *data);
 
 /**
  * Most programs will simply want to look up variables in all config files
@@ -207,7 +207,7 @@ void git_config(config_fn_t fn, void *);
  * config_options` in `config.h` for details. As an example: regular `git_config`
  * sets `opts.respect_includes` to `1` by default.
  */
-int config_with_options(config_fn_t fn, void *,
+int config_with_options(config_kvi_fn_t fn, void *,
 			struct git_config_source *config_source,
 			const struct config_options *opts);
 
@@ -698,5 +698,28 @@ NORETURN void git_die_config_linenr(const char *key, const char *filename, int l
 #define LOOKUP_CONFIG(mapping, var) \
 	lookup_config(mapping, ARRAY_SIZE(mapping), var)
 int lookup_config(const char **mapping, int nr_mapping, const char *var);
+
+/* struct adapt_non_kvi_data { */
+/* 	config_fn_t fn; */
+/* 	void *data; */
+/* }; */
+
+/* static inline int adapt_non_kvi(const char *var, const char *value, */
+/* 				struct key_value_info *kvi UNUSED, void *data) */
+/* { */
+/* 	struct adapt_non_kvi_data *adapt = data; */
+/* 	return adapt->fn(var, value, adapt->data); */
+/* } */
+
+/* struct adapt_kvi_data { */
+/* 	config_kvi_fn_t fn; */
+/* 	void *data; */
+/* }; */
+
+/* static inline int adapt_kvi(const char *var, const char *value, void *data) */
+/* { */
+/* 	struct adapt_kvi_data *adapt = data; */
+/* 	return adapt->fn(var, value, NULL, adapt->data); */
+/* } */
 
 #endif /* CONFIG_H */
