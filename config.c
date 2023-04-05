@@ -90,8 +90,6 @@ static struct config_reader the_reader;
 static inline void config_reader_push_source(struct config_reader *reader,
 					     struct config_source *top)
 {
-	if (reader->config_kvi)
-		BUG("source should not be set while iterating a config set");
 	top->prev = reader->source;
 	reader->source = top;
 }
@@ -109,8 +107,6 @@ static inline struct config_source *config_reader_pop_source(struct config_reade
 static inline void config_reader_set_kvi(struct config_reader *reader,
 					 struct key_value_info *kvi)
 {
-	if (kvi && reader->source)
-		BUG("kvi should not be set while parsing a config source");
 	reader->config_kvi = kvi;
 }
 
