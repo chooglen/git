@@ -1081,7 +1081,7 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 	http_is_verbose = 0;
 	normalized_url = url_normalize(url, &config.url);
 
-	git_config(urlmatch_config_entry, &config);
+	git_config(urlmatch_config_entry_nonkvi, &config);
 	free(normalized_url);
 	string_list_clear(&config.vars, 1);
 

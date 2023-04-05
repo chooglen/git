@@ -4,11 +4,19 @@
 identifier fn;
 @@
 (
-repo_config
+git_config_from_file
 |
-git_config
+git_config_from_file_with_options
 |
-git_protected_config
+git_config_from_mem
+|
+git_config_from_blob_oid
+|
+read_early_config
+|
+read_very_early_config
+|
+config_with_options
 )
   (fn, ...)
 

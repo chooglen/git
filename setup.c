@@ -510,7 +510,9 @@ no_prevention_needed:
 	startup_info->original_cwd = NULL;
 }
 
-static int read_worktree_config(const char *var, const char *value, void *vdata)
+static int read_worktree_config(const char *var, const char *value,
+				struct key_value_info *kvi UNUSED,
+				void *vdata)
 {
 	struct repository_format *data = vdata;
 
@@ -581,7 +583,8 @@ static enum extension_result handle_extension(const char *var,
 	return EXTENSION_UNKNOWN;
 }
 
-static int check_repo_format(const char *var, const char *value, void *vdata)
+static int check_repo_format(const char *var, const char *value,
+			     struct key_value_info *kvi, void *vdata)
 {
 	struct repository_format *data = vdata;
 	const char *ext;
@@ -610,7 +613,7 @@ static int check_repo_format(const char *var, const char *value, void *vdata)
 		}
 	}
 
-	return read_worktree_config(var, value, vdata);
+	return read_worktree_config(var, value,kvi, vdata);
 }
 
 static int check_repository_format_gently(const char *gitdir, struct repository_format *candidate, int *nongit_ok)

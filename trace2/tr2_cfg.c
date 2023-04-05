@@ -97,7 +97,8 @@ struct tr2_cfg_data {
 /*
  * See if the given config key matches any of our patterns of interest.
  */
-static int tr2_cfg_cb(const char *key, const char *value, void *d)
+static int tr2_cfg_cb(const char *key, const char *value,
+		      struct key_value_info *kvi UNUSED, void *d)
 {
 	struct strbuf **s;
 	struct tr2_cfg_data *data = (struct tr2_cfg_data *)d;
@@ -143,5 +144,6 @@ void tr2_cfg_set_fl(const char *file, int line, const char *key,
 	struct tr2_cfg_data data = { file, line };
 
 	if (tr2_cfg_load_patterns() > 0)
-		tr2_cfg_cb(key, value, &data);
+		/* TODO chooglen */
+		tr2_cfg_cb(key, value, NULL, &data);
 }

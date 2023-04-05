@@ -68,7 +68,8 @@ static int parse_int_cb(const char *var, const char *value, void *data)
 	return 0;
 }
 
-static int early_config_cb(const char *var, const char *value, void *vdata)
+static int early_config_cb(const char *var, const char *value,
+			   struct key_value_info *kvi UNUSED, void *vdata)
 {
 	const char *key = vdata;
 
