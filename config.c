@@ -102,18 +102,6 @@ static inline void config_reader_set_kvi(struct config_reader *reader,
 	reader->config_kvi = kvi;
 }
 
-struct adapt_non_kvi_data {
-	config_fn_t fn;
-	void *data;
-};
-
-static int adapt_non_kvi(const char *var, const char *value,
-			 struct key_value_info *kvi UNUSED, void *data)
-{
-	struct adapt_non_kvi_data *adapt = data;
-	return adapt->fn(var, value, adapt->data);
-}
-
 static int pack_compression_seen;
 static int zlib_compression_seen;
 
@@ -171,7 +159,7 @@ static long config_buf_ftell(struct config_source *conf)
 
 struct config_include_data {
 	int depth;
-	config_fn_t fn;
+	config_kvi_fn_t fn;
 	void *data;
 	const struct config_options *opts;
 	struct git_config_source *config_source;
@@ -184,7 +172,8 @@ struct config_include_data {
 };
 #define CONFIG_INCLUDE_INIT { 0 }
 
-static int git_config_include(const char *var, const char *value, void *data);
+static int git_config_include(const char *var, const char *value,
+			      struct key_value_info *kvi, void *data);
 
 #define MAX_INCLUDE_DEPTH 10
 static const char include_depth_advice[] = N_(
@@ -367,7 +356,8 @@ static int include_by_branch(const char *cond, size_t cond_len)
 	return ret;
 }
 
-static int add_remote_url(const char *var, const char *value, void *data)
+static int add_remote_url(const char *var, const char *value,
+			  struct key_value_info *kvi UNUSED, void *data)
 {
 	struct string_list *remote_urls = data;
 	const char *remote_name;
@@ -395,7 +385,7 @@ static void populate_remote_urls(struct config_include_data *inc)
 }
 
 static int forbid_remote_url(const char *var, const char *value UNUSED,
-			     void *data UNUSED)
+			     struct key_value_info *kvi UNUSED, void *data UNUSED)
 {
 	const char *remote_name;
 	size_t remote_name_len;
@@ -458,7 +448,8 @@ static int include_condition_is_true(struct config_source *cs,
 	return 0;
 }
 
-static int git_config_include(const char *var, const char *value, void *data)
+static int git_config_include(const char *var, const char *value,
+			      struct key_value_info *kvi, void *data)
 {
 	struct config_include_data *inc = data;
 	struct config_source *cs = inc->config_reader->source;
@@ -470,7 +461,7 @@ static int git_config_include(const char *var, const char *value, void *data)
 	 * Pass along all values, including "include" directives; this makes it
 	 * possible to query information on the includes themselves.
 	 */
-	ret = inc->fn(var, value, inc->data);
+	ret = inc->fn(var, value, kvi, inc->data);
 	if (ret < 0)
 		return ret;
 
@@ -480,7 +471,7 @@ static int git_config_include(const char *var, const char *value, void *data)
 	if (!parse_config_key(var, "includeif", &cond, &cond_len, &key) &&
 	    cond && include_condition_is_true(cs, inc, cond, cond_len) &&
 	    !strcmp(key, "path")) {
-		config_fn_t old_fn = inc->fn;
+		config_kvi_fn_t old_fn = inc->fn;
 
 		if (inc->opts->unconditional_remote_url)
 			inc->fn = forbid_remote_url;
@@ -926,8 +917,8 @@ static char *parse_value(struct config_source *cs)
 	}
 }
 
-static int get_value(struct config_source *cs, config_fn_t fn, void *data,
-		     struct strbuf *name)
+static int get_value(struct config_source *cs, struct key_value_info *kvi,
+		     config_kvi_fn_t fn, void *data, struct strbuf *name)
 {
 	int c;
 	char *value;
@@ -960,7 +951,8 @@ static int get_value(struct config_source *cs, config_fn_t fn, void *data,
 	 * accurate line number in error messages.
 	 */
 	cs->linenr--;
-	ret = fn(name->buf, value, data);
+	kvi->linenr = cs->linenr;
+	ret = fn(name->buf, value, kvi, data);
 	if (ret >= 0)
 		cs->linenr++;
 	return ret;
@@ -1069,7 +1061,9 @@ static void kvi_from_source(struct config_source *cs,
 }
 
 
-static int git_parse_source(struct config_source *cs, config_fn_t fn,
+static int git_parse_source(struct config_source *cs,
+			    struct key_value_info *kvi,
+			    config_kvi_fn_t fn,
 			    void *data, const struct config_options *opts)
 {
 	int comment = 0;
@@ -1154,7 +1148,7 @@ static int git_parse_source(struct config_source *cs, config_fn_t fn,
 		 */
 		strbuf_setlen(var, baselen);
 		strbuf_addch(var, tolower(c));
-		if (get_value(cs, fn, data, var) < 0)
+		if (get_value(cs, kvi, fn, data, var) < 0)
 			break;
 	}
 
@@ -2010,9 +2004,10 @@ int git_default_config(const char *var, const char *value, void *cb)
  * this function.
  */
 static int do_config_from(struct config_reader *reader,
-			  struct config_source *top, config_fn_t fn, void *data,
+			  struct config_source *top, config_kvi_fn_t fn, void *data,
 			  const struct config_options *opts)
 {
+	struct key_value_info kvi = { 0 };
 	int ret;
 
 	/* push config-file parsing state stack */
@@ -2024,19 +2019,22 @@ static int do_config_from(struct config_reader *reader,
 	if (opts)
 		top->scope = opts->scope;
 	config_reader_push_source(reader, top);
+	kvi_from_source(top, &kvi);
+	config_reader_set_kvi(reader, &kvi);
 
-	ret = git_parse_source(top, fn, data, opts);
+	ret = git_parse_source(top, &kvi, fn, data, opts);
 
 	/* pop config-file parsing state stack */
 	strbuf_release(&top->value);
 	strbuf_release(&top->var);
+	config_reader_set_kvi(reader, NULL);
 	config_reader_pop_source(reader);
 
 	return ret;
 }
 
 static int do_config_from_file(struct config_reader *reader,
-			       config_fn_t fn,
+			       config_kvi_fn_t fn,
 			       const enum config_origin_type origin_type,
 			       const char *name, const char *path, FILE *f,
 			       void *data, const struct config_options *opts)
@@ -2059,14 +2057,14 @@ static int do_config_from_file(struct config_reader *reader,
 	return ret;
 }
 
-static int git_config_from_stdin(config_fn_t fn, void *data,
+static int git_config_from_stdin(config_kvi_fn_t fn, void *data,
 				 struct config_options *opts)
 {
 	return do_config_from_file(&the_reader, fn, CONFIG_ORIGIN_STDIN, "",
 				   NULL, stdin, data, opts);
 }
 
-int git_config_from_file_with_options(config_fn_t fn, const char *filename,
+int git_config_from_file_with_options(config_kvi_fn_t fn, const char *filename,
 				      void *data,
 				      const struct config_options *opts)
 {
@@ -2084,12 +2082,12 @@ int git_config_from_file_with_options(config_fn_t fn, const char *filename,
 	return ret;
 }
 
-int git_config_from_file(config_fn_t fn, const char *filename, void *data)
+int git_config_from_file(config_kvi_fn_t fn, const char *filename, void *data)
 {
 	return git_config_from_file_with_options(fn, filename, data, NULL);
 }
 
-int git_config_from_mem(config_fn_t fn,
+int git_config_from_mem(config_kvi_fn_t fn,
 			const enum config_origin_type origin_type,
 			const char *name, const char *buf, size_t len,
 			void *data, const struct config_options *opts)
@@ -2110,7 +2108,7 @@ int git_config_from_mem(config_fn_t fn,
 	return do_config_from(&the_reader, &top, fn, data, opts);
 }
 
-static int git_config_from_blob_oid_with_options(config_fn_t fn,
+static int git_config_from_blob_oid_with_options(config_kvi_fn_t fn,
 						 const char *name,
 						 struct repository *repo,
 						 const struct object_id *oid,
@@ -2137,7 +2135,7 @@ static int git_config_from_blob_oid_with_options(config_fn_t fn,
 	return ret;
 }
 
-int git_config_from_blob_oid(config_fn_t fn,
+int git_config_from_blob_oid(config_kvi_fn_t fn,
 			      const char *name,
 			      struct repository *repo,
 			      const struct object_id *oid,
@@ -2147,7 +2145,7 @@ int git_config_from_blob_oid(config_fn_t fn,
 						     oid, data, NULL);
 }
 
-static int git_config_from_blob_ref(config_fn_t fn,
+static int git_config_from_blob_ref(config_kvi_fn_t fn,
 				    struct repository *repo,
 				    const char *name,
 				    void *data,
@@ -2212,7 +2210,7 @@ int git_config_system(void)
 
 static int do_git_config_sequence(struct config_reader *reader,
 				  const struct config_options *opts,
-				  config_fn_t fn, void *data)
+				  config_kvi_fn_t fn, void *data)
 {
 	int ret = 0;
 	char *system_config = git_system_config();
@@ -2261,14 +2259,9 @@ static int do_git_config_sequence(struct config_reader *reader,
 		free(path);
 	}
 
-	if (!opts->ignore_cmdline) {
-		struct adapt_non_kvi_data adapt = {
-			.fn = fn,
-			.data = data,
-		};
-		if (git_config_from_parameters(adapt_non_kvi, &adapt) < 0)
+	if (!opts->ignore_cmdline)
+		if (git_config_from_parameters(fn, data) < 0)
 			die(_("unable to parse command-line config"));
-	}
 
 	free(system_config);
 	free(xdg_config);
@@ -2277,7 +2270,7 @@ static int do_git_config_sequence(struct config_reader *reader,
 	return ret;
 }
 
-int config_with_options(config_fn_t fn, void *data,
+int config_with_options(config_kvi_fn_t fn, void *data,
 			struct git_config_source *config_source,
 			const struct config_options *opts)
 {
@@ -2352,7 +2345,7 @@ static void configset_iter(struct config_reader *reader, struct config_set *set,
 	}
 }
 
-void read_early_config(config_fn_t cb, void *data)
+void read_early_config(config_kvi_fn_t cb, void *data)
 {
 	struct config_options opts = {0};
 	struct strbuf commondir = STRBUF_INIT;
@@ -2386,7 +2379,7 @@ void read_early_config(config_fn_t cb, void *data)
  * Read config but only enumerate system and global settings.
  * Omit any repo-local, worktree-local, or command-line settings.
  */
-void read_very_early_config(config_fn_t cb, void *data)
+void read_very_early_config(config_kvi_fn_t cb, void *data)
 {
 	struct config_options opts = { 0 };
 
@@ -2420,7 +2413,7 @@ static struct config_set_element *configset_find_element(struct config_set *set,
 
 static int configset_add_value(struct config_source *cs,
 			       struct config_set *set, const char *key,
-			       const char *value)
+			       const char *value, struct key_value_info *kv_infop)
 {
 	struct config_set_element *e;
 	struct string_list_item *si;
@@ -2446,12 +2439,7 @@ static int configset_add_value(struct config_source *cs,
 	l_item->e = e;
 	l_item->value_index = e->value_list.nr - 1;
 
-	if (!cs)
-		BUG("configset_add_value has no source");
-	if (cs->name)
-		kvi_from_source(cs, kv_info);
-	else
-		kvi_from_param(kv_info);
+	memcpy(kv_info, kv_infop, sizeof(struct key_value_info));
 	si->util = kv_info;
 
 	return 0;
@@ -2505,10 +2493,12 @@ struct configset_add_data {
 };
 #define CONFIGSET_ADD_INIT { 0 }
 
-static int config_set_callback(const char *key, const char *value, void *cb)
+static int config_set_callback(const char *key, const char *value,
+			       struct key_value_info *kvi, void *cb)
 {
 	struct configset_add_data *data = cb;
-	configset_add_value(data->config_reader->source, data->config_set, key, value);
+	configset_add_value(data->config_reader->source, data->config_set, key,
+			    value, kvi);
 	return 0;
 }
 
@@ -3049,7 +3039,8 @@ static int store_aux_event(enum config_event_t type,
 	return 0;
 }
 
-static int store_aux(const char *key, const char *value, void *cb)
+static int store_aux(const char *key, const char *value,
+		     struct key_value_info *kvi UNUSED, void *cb)
 {
 	struct config_store_data *store = cb;
 
