@@ -208,7 +208,7 @@ static void determine_whence(struct wt_status *s)
 		s->whence = whence;
 }
 
-static void status_init_config(struct wt_status *s, config_fn_t fn)
+static void status_init_config(struct wt_status *s, config_kvi_fn_t fn)
 {
 	wt_status_prepare(the_repository, s);
 	init_diff_ui_defaults();
@@ -1402,7 +1402,8 @@ static int parse_status_slot(const char *slot)
 	return LOOKUP_CONFIG(color_status_slots, slot);
 }
 
-static int git_status_config(const char *k, const char *v, void *cb)
+static int git_status_config(const char *k, const char *v,
+			     struct key_value_info *kvi, void *cb)
 {
 	struct wt_status *s = cb;
 	const char *slot_name;
@@ -1487,7 +1488,7 @@ static int git_status_config(const char *k, const char *v, void *cb)
 		s->detect_rename = git_config_rename(k, v);
 		return 0;
 	}
-	return git_diff_ui_config(k, v, NULL);
+	return git_diff_ui_config(k, v, kvi, NULL);
 }
 
 int cmd_status(int argc, const char **argv, const char *prefix)
@@ -1602,7 +1603,8 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
-static int git_commit_config(const char *k, const char *v, void *cb)
+static int git_commit_config(const char *k, const char *v,
+			     struct key_value_info *kvi, void *cb)
 {
 	struct wt_status *s = cb;
 
@@ -1624,7 +1626,7 @@ static int git_commit_config(const char *k, const char *v, void *cb)
 		return 0;
 	}
 
-	return git_status_config(k, v, s);
+	return git_status_config(k, v, kvi, s);
 }
 
 int cmd_commit(int argc, const char **argv, const char *prefix)

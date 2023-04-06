@@ -558,7 +558,8 @@ struct urlmatch_current_candidate_value {
 	struct strbuf value;
 };
 
-static int urlmatch_collect_fn(const char *var, const char *value, void *cb)
+static int urlmatch_collect_fn(const char *var, const char *value,
+			       struct key_value_info *kvi, void *cb)
 {
 	struct string_list *values = cb;
 	struct string_list_item *item = string_list_insert(values, var);

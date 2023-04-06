@@ -46,7 +46,7 @@ static int credential_from_potentially_partial_url(struct credential *c,
 						   const char *url);
 
 static int credential_config_callback(const char *var, const char *value,
-				      void *data)
+				      struct key_value_info *kvi, void *data)
 {
 	struct credential *c = data;
 	const char *key;
@@ -131,7 +131,7 @@ static void credential_apply_config(struct credential *c)
 	credential_format(c, &url);
 	normalized_url = url_normalize(url.buf, &config.url);
 
-	git_config(urlmatch_config_entry_nonkvi, &config);
+	git_config(urlmatch_config_entry, &config);
 	string_list_clear(&config.vars, 1);
 	free(normalized_url);
 	urlmatch_config_release(&config);

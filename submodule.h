@@ -49,7 +49,9 @@ int remove_path_from_gitmodules(const char *path);
 void stage_updated_gitmodules(struct index_state *istate);
 void set_diffopt_flags_from_submodule_config(struct diff_options *,
 					     const char *path);
-int git_default_submodule_config(const char *var, const char *value, void *cb);
+struct key_value_info;
+int git_default_submodule_config(const char *var, const char *value,
+				 struct key_value_info *kvi, void *cb);
 
 struct option;
 int option_parse_recurse_submodules_worktree_updater(const struct option *opt,

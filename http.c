@@ -361,7 +361,8 @@ static void process_curl_messages(void)
 	}
 }
 
-static int http_options(const char *var, const char *value, void *cb)
+static int http_options(const char *var, const char *value,
+			struct key_value_info *kvi, void *cb)
 {
 	if (!strcmp("http.version", var)) {
 		return git_config_string(&curl_http_version, var, value);
@@ -532,7 +533,7 @@ static int http_options(const char *var, const char *value, void *cb)
 	}
 
 	/* Fall back on the default ones */
-	return git_default_config(var, value, cb);
+	return git_default_config(var, value, kvi, cb);
 }
 
 static int curl_empty_auth_enabled(void)
@@ -1201,7 +1202,7 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 	http_is_verbose = 0;
 	normalized_url = url_normalize(url, &config.url);
 
-	git_config(urlmatch_config_entry_nonkvi, &config);
+	git_config(urlmatch_config_entry, &config);
 	free(normalized_url);
 	string_list_clear(&config.vars, 1);
 

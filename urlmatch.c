@@ -566,7 +566,7 @@ int urlmatch_config_entry(const char *var, const char *value,
 
 	if (!skip_prefix(var, collect->section, &key) || *(key++) != '.') {
 		if (collect->cascade_fn)
-			return collect->cascade_fn(var, value, cb);
+			return collect->cascade_fn(var, value, kvi, cb);
 		return 0; /* not interested */
 	}
 	dot = strrchr(key, '.');
@@ -610,15 +610,10 @@ int urlmatch_config_entry(const char *var, const char *value,
 	strbuf_addstr(&synthkey, collect->section);
 	strbuf_addch(&synthkey, '.');
 	strbuf_addstr(&synthkey, key);
-	retval = collect->collect_fn(synthkey.buf, value, collect->cb);
+	retval = collect->collect_fn(synthkey.buf, value, kvi, collect->cb);
 
 	strbuf_release(&synthkey);
 	return retval;
-}
-
-int urlmatch_config_entry_nonkvi(const char *var, const char *value, void *cb)
-{
-	return urlmatch_config_entry(var, value, NULL, cb);
 }
 
 void urlmatch_config_release(struct urlmatch_config *config)

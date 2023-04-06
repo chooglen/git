@@ -80,7 +80,8 @@ static unsigned int colopts;
 
 define_list_config_array(color_branch_slots);
 
-static int git_branch_config(const char *var, const char *value, void *cb)
+static int git_branch_config(const char *var, const char *value,
+			     struct key_value_info *kvi, void *cb)
 {
 	const char *slot_name;
 
@@ -114,7 +115,7 @@ static int git_branch_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	return git_color_default_config(var, value, cb);
+	return git_color_default_config(var, value,kvi, cb);
 }
 
 static const char *branch_get_color(enum color_branch ix)

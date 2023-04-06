@@ -871,7 +871,9 @@ cached:
 	return advertise_bundle_uri;
 }
 
-static int config_to_packet_line(const char *key, const char *value, void *data)
+static int config_to_packet_line(const char *key, const char *value,
+				 struct key_value_info *kvi UNUSED,
+				 void *data)
 {
 	struct packet_reader *writer = data;
 

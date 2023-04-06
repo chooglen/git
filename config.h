@@ -138,14 +138,14 @@ struct key_value_info {
  *
  * - a void pointer passed in by the caller of the config API; this can
  *   contain callback-specific data
+ *  TODO(chooglen)
  *
  * A config callback should return 0 for success, or -1 if the variable
  * could not be parsed properly.
  */
-typedef int (*config_fn_t)(const char *, const char *, void *);
 typedef int (*config_kvi_fn_t)(const char *, const char *, struct key_value_info *, void *);
 
-int git_default_config(const char *, const char *, void *);
+int git_default_config(const char *, const char *, struct key_value_info *, void *);
 
 /**
  * Read a specific file in git-config format.
@@ -186,7 +186,7 @@ void read_very_early_config(config_kvi_fn_t cb, void *data);
  *
  * Unlike git_config_from_file(), this function respects includes.
  */
-void git_config(config_fn_t fn, void *);
+void git_config(config_kvi_fn_t fn, void *);
 
 /**
  * Lets the caller examine config while adjusting some of the default
@@ -526,7 +526,7 @@ int git_configset_get_pathname(struct config_set *cs, const char *key, const cha
 
 /* Functions for reading a repository's config */
 struct repository;
-void repo_config(struct repository *repo, config_fn_t fn, void *data);
+void repo_config(struct repository *repo, config_kvi_fn_t fn, void *data);
 
 /**
  * Run only the discover part of the repo_config_get_*() functions
@@ -565,7 +565,7 @@ int repo_config_get_pathname(struct repository *repo,
  * config ignores repository config, so these do not take a `struct
  * repository` parameter.
  */
-void git_protected_config(config_fn_t fn, void *data);
+void git_protected_config(config_kvi_fn_t fn, void *data);
 
 /**
  * Querying For Specific Variables

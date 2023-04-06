@@ -1116,7 +1116,8 @@ struct safe_directory_data {
 	int is_safe;
 };
 
-static int safe_directory_cb(const char *key, const char *value, void *d)
+static int safe_directory_cb(const char *key, const char *value,
+			     struct key_value_info *kvi UNUSED, void *d)
 {
 	struct safe_directory_data *data = d;
 
@@ -1172,7 +1173,8 @@ static int ensure_valid_ownership(const char *gitfile,
 	return data.is_safe;
 }
 
-static int allowed_bare_repo_cb(const char *key, const char *value, void *d)
+static int allowed_bare_repo_cb(const char *key, const char *value,
+				struct key_value_info *kvi UNUSED, void *d)
 {
 	enum allowed_bare_repo *allowed_bare_repo = d;
 

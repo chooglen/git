@@ -272,7 +272,7 @@ void init_diff_ui_defaults(void)
 }
 
 int git_diff_heuristic_config(const char *var, const char *value,
-			      void *cb UNUSED)
+			      struct key_value_info *kvi UNUSED, void *cb UNUSED)
 {
 	if (!strcmp(var, "diff.indentheuristic"))
 		diff_indent_heuristic = git_config_bool(var, value);
@@ -350,7 +350,8 @@ static unsigned parse_color_moved_ws(const char *arg)
 	return ret;
 }
 
-int git_diff_ui_config(const char *var, const char *value, void *cb)
+int git_diff_ui_config(const char *var, const char *value,
+		       struct key_value_info *kvi, void *cb)
 {
 	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff")) {
 		diff_use_color_default = git_config_colorbool(var, value);
@@ -430,13 +431,14 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	if (git_color_config(var, value, cb) < 0)
+	if (git_color_config(var, value, kvi, cb) < 0)
 		return -1;
 
-	return git_diff_basic_config(var, value, cb);
+	return git_diff_basic_config(var, value, kvi, cb);
 }
 
-int git_diff_basic_config(const char *var, const char *value, void *cb)
+int git_diff_basic_config(const char *var, const char *value,
+			  struct key_value_info *kvi, void *cb)
 {
 	const char *name;
 
@@ -485,10 +487,10 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	if (git_diff_heuristic_config(var, value, cb) < 0)
+	if (git_diff_heuristic_config(var, value, kvi, cb) < 0)
 		return -1;
 
-	return git_default_config(var, value, cb);
+	return git_default_config(var, value, kvi, cb);
 }
 
 static char *quote_two(const char *one, const char *two)

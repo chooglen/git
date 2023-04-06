@@ -183,7 +183,8 @@ static const char tag_template_nocleanup[] =
 	"Lines starting with '%c' will be kept; you may remove them"
 	" yourself if you want to.\n");
 
-static int git_tag_config(const char *var, const char *value, void *cb)
+static int git_tag_config(const char *var, const char *value,
+			  struct key_value_info *kvi, void *cb)
 {
 	if (!strcmp(var, "tag.gpgsign")) {
 		config_sign_tag = git_config_bool(var, value);
@@ -204,7 +205,7 @@ static int git_tag_config(const char *var, const char *value, void *cb)
 
 	if (starts_with(var, "column."))
 		return git_column_config(var, value, "tag", &colopts);
-	return git_color_default_config(var, value, cb);
+	return git_color_default_config(var, value, kvi, cb);
 }
 
 static void write_tag_body(int fd, const struct object_id *oid)

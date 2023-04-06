@@ -136,7 +136,7 @@ static void send_possibly_unborn_head(struct ls_refs_data *data)
 }
 
 static int ls_refs_config(const char *var, const char *value,
-			  void *cb_data)
+			  struct key_value_info *kvi, void *cb_data)
 {
 	struct ls_refs_data *data = cb_data;
 	/*
@@ -144,7 +144,8 @@ static int ls_refs_config(const char *var, const char *value,
 	 * config. This may need to eventually be expanded to "receive", but we
 	 * don't yet know how that information will be passed to ls-refs.
 	 */
-	return parse_hide_refs_config(var, value, "uploadpack", &data->hidden_refs);
+	return parse_hide_refs_config(var, value, "uploadpack",
+				      &data->hidden_refs);
 }
 
 int ls_refs(struct repository *r, struct packet_reader *request)

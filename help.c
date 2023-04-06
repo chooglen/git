@@ -309,7 +309,8 @@ void load_command_list(const char *prefix,
 	exclude_cmds(other_cmds, main_cmds);
 }
 
-static int get_colopts(const char *var, const char *value, void *data)
+static int get_colopts(const char *var, const char *value,
+		       struct key_value_info *kvi, void *data)
 {
 	unsigned int *colopts = data;
 
@@ -459,7 +460,8 @@ void list_developer_interfaces_help(void)
 	putchar('\n');
 }
 
-static int get_alias(const char *var, const char *value, void *data)
+static int get_alias(const char *var, const char *value,
+		     struct key_value_info *kvi UNUSED, void *data)
 {
 	struct string_list *list = data;
 

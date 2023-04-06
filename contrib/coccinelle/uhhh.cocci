@@ -1,8 +1,9 @@
 // These are safe to apply to *.c *.h builtin/*.c
 
 @ get_fn @
-identifier fn;
+identifier fn, R;
 @@
+(
 (
 git_config_from_file
 |
@@ -17,8 +18,15 @@ read_early_config
 read_very_early_config
 |
 config_with_options
+|
+git_config
+|
+git_protected_config
 )
   (fn, ...)
+|
+repo_config(R, fn, ...)
+)
 
 @ extends get_fn @
 identifier C1, C2, D;

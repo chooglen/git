@@ -417,7 +417,8 @@ int want_color_fd(int fd, int var)
 	return var;
 }
 
-int git_color_config(const char *var, const char *value, void *cb UNUSED)
+int git_color_config(const char *var, const char *value,
+		     struct key_value_info *kvi UNUSED, void *cb UNUSED)
 {
 	if (!strcmp(var, "color.ui")) {
 		git_use_color_default = git_config_colorbool(var, value);
@@ -427,12 +428,13 @@ int git_color_config(const char *var, const char *value, void *cb UNUSED)
 	return 0;
 }
 
-int git_color_default_config(const char *var, const char *value, void *cb)
+int git_color_default_config(const char *var, const char *value,
+			     struct key_value_info *kvi, void *cb)
 {
-	if (git_color_config(var, value, cb) < 0)
+	if (git_color_config(var, value, kvi, cb) < 0)
 		return -1;
 
-	return git_default_config(var, value, cb);
+	return git_default_config(var, value, kvi, cb);
 }
 
 void color_print_strbuf(FILE *fp, const char *color, const struct strbuf *sb)

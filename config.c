@@ -1566,7 +1566,7 @@ int git_config_color(char *dest, const char *var, const char *value)
 	return 0;
 }
 
-static int git_default_core_config(const char *var, const char *value, void *cb)
+static int git_default_core_config(const char *var, const char *value, struct key_value_info *kvi, void *cb)
 {
 	/* This needs a better name */
 	if (!strcmp(var, "core.filemode")) {
@@ -1851,7 +1851,7 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
 	}
 
 	/* Add other config variables here and to Documentation/config.txt. */
-	return platform_core_config(var, value, cb);
+	return platform_core_config(var, value, kvi, cb);
 }
 
 static int git_default_sparse_config(const char *var, const char *value)
@@ -1953,14 +1953,16 @@ static int git_default_mailmap_config(const char *var, const char *value)
 	return 0;
 }
 
-int git_default_config(const char *var, const char *value, void *cb)
+int git_default_config(const char *var, const char *value,
+		       struct key_value_info *kvi, void *cb)
 {
 	if (starts_with(var, "core."))
-		return git_default_core_config(var, value, cb);
+		return git_default_core_config(var, value, kvi, cb);
 
 	if (starts_with(var, "user.") ||
 	    starts_with(var, "author.") ||
 	    starts_with(var, "committer."))
+		/* TODO chooglen maybe it's okay to not plumb kvi through everything */
 		return git_ident_config(var, value, cb);
 
 	if (starts_with(var, "i18n."))
@@ -2330,7 +2332,7 @@ int config_with_options(config_kvi_fn_t fn, void *data,
 }
 
 static void configset_iter(struct config_reader *reader, struct config_set *set,
-			   config_fn_t fn, void *data)
+			   config_kvi_fn_t fn, void *data)
 {
 	int i, value_index;
 	struct string_list *values;
@@ -2338,13 +2340,16 @@ static void configset_iter(struct config_reader *reader, struct config_set *set,
 	struct configset_list *list = &set->list;
 
 	for (i = 0; i < list->nr; i++) {
+		struct key_value_info *kvi;
+
 		entry = list->items[i].e;
 		value_index = list->items[i].value_index;
 		values = &entry->value_list;
+		kvi = values->items[value_index].util;
 
-		config_reader_set_kvi(reader, values->items[value_index].util);
+		config_reader_set_kvi(reader, kvi);
 
-		if (fn(entry->key, values->items[value_index].string, data) < 0)
+		if (fn(entry->key, values->items[value_index].string, kvi, data) < 0)
 			git_die_config_linenr(entry->key,
 					      reader->config_kvi->filename,
 					      reader->config_kvi->linenr);
@@ -2724,7 +2729,7 @@ static void repo_config_clear(struct repository *repo)
 	git_configset_clear(repo->config);
 }
 
-void repo_config(struct repository *repo, config_fn_t fn, void *data)
+void repo_config(struct repository *repo, config_kvi_fn_t fn, void *data)
 {
 	git_config_check_init(repo);
 	configset_iter(&the_reader, repo->config, fn, data);
@@ -2842,7 +2847,7 @@ static void read_protected_config(void)
 	config_with_options(config_set_callback, &data, NULL, &opts);
 }
 
-void git_protected_config(config_fn_t fn, void *data)
+void git_protected_config(config_kvi_fn_t fn, void *data)
 {
 	if (!protected_config.hash_initialized)
 		read_protected_config();
@@ -2850,7 +2855,7 @@ void git_protected_config(config_fn_t fn, void *data)
 }
 
 /* Functions used historically to read configuration from 'the_repository' */
-void git_config(config_fn_t fn, void *data)
+void git_config(config_kvi_fn_t fn, void *data)
 {
 	repo_config(the_repository, fn, data);
 }
