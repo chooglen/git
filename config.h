@@ -369,7 +369,6 @@ void git_global_config(char **user, char **xdg);
 
 int git_config_parse_parameter(const char *, config_kvi_fn_t fn, void *data);
 
-enum config_scope current_config_scope(void);
 const char *current_config_origin_type(void);
 
 /*
@@ -720,4 +719,6 @@ int lookup_config(const char **mapping, int nr_mapping, const char *var);
 /* 	return adapt->fn(var, value, NULL, adapt->data); */
 /* } */
 
+
+void kvi_from_param(struct key_value_info *out);
 #endif /* CONFIG_H */

@@ -659,7 +659,7 @@ static int config_parse_pair(const char *key, const char *value,
 
 
 /* for values read from `git_config_from_parameters()` */
-static void kvi_from_param(struct key_value_info *out)
+void kvi_from_param(struct key_value_info *out)
 {
 	out->filename = NULL;
 	out->linenr = -1;
@@ -4032,16 +4032,6 @@ static int reader_config_name(struct config_reader *reader, const char **out)
 	else
 		return 1;
 	return 0;
-}
-
-enum config_scope current_config_scope(void)
-{
-	if (the_reader.config_kvi)
-		return the_reader.config_kvi->scope;
-	else if (the_reader.source)
-		return the_reader.source->scope;
-	else
-		return CONFIG_SCOPE_UNKNOWN;
 }
 
 int lookup_config(const char **mapping, int nr_mapping, const char *var)
