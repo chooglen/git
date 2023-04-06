@@ -302,9 +302,10 @@ static int parse_fetch_recurse(const char *opt, const char *arg,
 	}
 }
 
-int parse_submodule_fetchjobs(const char *var, const char *value)
+int parse_submodule_fetchjobs(const char *var, const char *value,
+			      struct key_value_info *kvi)
 {
-	int fetchjobs = git_config_int(var, value);
+	int fetchjobs = git_config_int(var, value, kvi);
 	if (fetchjobs < 0)
 		die(_("negative values not allowed for submodule.fetchJobs"));
 	if (!fetchjobs)
@@ -852,7 +853,7 @@ static int gitmodules_fetch_config(const char *var, const char *value,
 	if (!strcmp(var, "submodule.fetchjobs")) {
 		if (config->max_children)
 			*(config->max_children) =
-				parse_submodule_fetchjobs(var, value);
+				parse_submodule_fetchjobs(var, value, kvi);
 		return 0;
 	} else if (!strcmp(var, "fetch.recursesubmodules")) {
 		if (config->recurse_submodules)
@@ -878,7 +879,7 @@ static int gitmodules_update_clone_config(const char *var, const char *value,
 {
 	int *max_jobs = cb;
 	if (!strcmp(var, "submodule.fetchjobs"))
-		*max_jobs = parse_submodule_fetchjobs(var, value);
+		*max_jobs = parse_submodule_fetchjobs(var, value, kvi);
 	return 0;
 }
 
