@@ -708,12 +708,9 @@ static int git_config_from_parameters(config_kvi_fn_t fn, void *data)
 	struct strvec to_free = STRVEC_INIT;
 	int ret = 0;
 	char *envw = NULL;
-	struct config_source source = { 0 };
 	struct key_value_info kvi = { 0 };
 
 	kvi_from_param(&kvi);
-	source.origin_type = CONFIG_ORIGIN_CMDLINE;
-
 	env = getenv(CONFIG_COUNT_ENVIRONMENT);
 	if (env) {
 		unsigned long count;
