@@ -557,7 +557,7 @@ int urlmatch_config_entry(const struct config_context *ctx, void *cb)
 
 	struct config_context collect_ctx = {
 		.value = ctx->value,
-		.kvi = ctx->kvi,
+		.kvi = ctx ->kvi,
 	};
 	struct string_list_item *item;
 	struct urlmatch_config *collect = cb;
