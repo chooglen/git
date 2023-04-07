@@ -813,6 +813,7 @@ if ($validate) {
 			validate_patch($f, $target_xfer_encoding);
 		}
 	}
+	validate_patch_series(@files)
 }
 
 @files = handle_backup_files(@files);
@@ -2142,6 +2143,41 @@ sub validate_patch {
 					       "warning: no patches were sent\n"), $fn, $.);
 			}
 		}
+	}
+	return;
+}
+
+sub validate_patch_series {
+	my @files = @_;
+
+	unless ($repo) {
+		return;
+	}
+	require File::Temp;
+	my $tmp = File::Temp->new(
+		TEMPLATE => "sendemail-series.XXXXXXXX",
+		UNLINK => 1,
+	);
+	for my $fn (@files) {
+		unless (-p $fn) {
+			$fn = Cwd::abs_path($fn);
+			if ($fn =~ /\n/) {
+				$fn =~ s/\n/'\\n'/g;
+				printf STDERR __("warning: file name contains '\\n': %s. Skipping validation.\n"), $fn;
+			} else {
+				$tmp->print("$fn\n");
+			}
+		}
+	}
+	my $hook_name = "sendemail-validate-series";
+	my @cmd = ("git", "hook", "run", "--ignore-missing",
+		   "--to-stdin", $tmp->filename, $hook_name, "--");
+	my $hook_error = system_or_msg(\@cmd, undef, "@cmd");
+	if ($hook_error) {
+		$hook_error = sprintf(
+		    __("fatal: series rejected by %s hook\n%s\nwarning: no patches were sent\n"),
+		    $hook_name, $hook_error);
+		die $hook_error;
 	}
 	return;
 }

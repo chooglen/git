@@ -619,6 +619,25 @@ capitalization and multi-line tab structure.
 Exiting with a non-zero status causes `git send-email` to abort
 before sending any e-mails.
 
+sendemail-validate-series
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This hook is invoked by linkgit:git-send-email[1].  It allows performing
+validation on a complete patch series at once, instead of patch by patch with
+`sendemail-validate`.
+
+`sendemail-validate-series` takes no arguments.  For each e-mail to be sent,
+it receives on standard input a line of the format:
+
+  <patch-file> LF
+
+where '<patch-file>' is an absolute path to a file that holds an e-mail to be
+sent.  Any '<patch-file>' that contains a 'LF' character will *not* be fed to
+the hook and an explicit warning will be printed instead.
+
+If the hook exits with non-zero status, `git send-email` will abort before
+sending any e-mails.
+
 fsmonitor-watchman
 ~~~~~~~~~~~~~~~~~~
 
