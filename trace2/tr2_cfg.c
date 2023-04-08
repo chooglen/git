@@ -143,7 +143,9 @@ void tr2_cfg_set_fl(const char *file, int line, const char *key,
 		    const char *value)
 {
 	struct tr2_cfg_data data = { file, line };
+	struct key_value_info kvi = KVI_INIT;
 
+	ctx.kvi = &kvi;
 	if (tr2_cfg_load_patterns() > 0)
 		tr2_cfg_cb(key, value, &data);
 }

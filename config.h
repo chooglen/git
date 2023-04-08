@@ -111,17 +111,46 @@ struct config_options {
 	} error_action;
 };
 
+/* Config source metadata for a given config key-value pair */
+struct key_value_info {
+	const char *filename;
+	int linenr;
+	enum config_origin_type origin_type;
+	enum config_scope scope;
+};
+#define KVI_INIT { \
+	.filename = NULL, \
+	.linenr = -1, \
+	.origin_type = CONFIG_ORIGIN_UNKNOWN, \
+	.scope = CONFIG_SCOPE_UNKNOWN, \
+}
+
+/* Captures the current status of the config iteration. */
+struct config_context {
+	/*
+	 * The name of the parsed variable. This is in canonical "flat" form:
+	 * the section, subsection, and variable segments will be separated by
+	 * dots, and the section and variable segments will be all lowercase.
+	 * E.g., `core.ignorecase`, `diff.SomeType.textconv`.
+	 */
+	const char *key;
+	/*
+	 * The value of the found variable, as a string. If the variable had no
+	 * value specified, the value will be NULL (typically this means it
+	 * should be interpreted as boolean true).
+	 */
+	const char *value;
+	/* Config source metadata for .key and .value. */
+	const struct key_value_info *kvi;
+};
+#define CONFIG_CONTEXT_INIT { 0 }
+
 /**
- * A config callback function takes three parameters:
+ * A config callback function takes two parameters:
  *
- * - the name of the parsed variable. This is in canonical "flat" form: the
- *   section, subsection, and variable segments will be separated by dots,
- *   and the section and variable segments will be all lowercase. E.g.,
- *   `core.ignorecase`, `diff.SomeType.textconv`.
- *
- * - the value of the found variable, as a string. If the variable had no
- *   value specified, the value will be NULL (typically this means it
- *   should be interpreted as boolean true).
+ * - a struct config_context that holds the current state of the config
+ *   iteration, including the variable name and value, current line number, and
+ *   information about the config source
  *
  * - a void pointer passed in by the caller of the config API; this can
  *   contain callback-specific data
@@ -129,7 +158,7 @@ struct config_options {
  * A config callback should return 0 for success, or -1 if the variable
  * could not be parsed properly.
  */
-typedef int (*config_fn_t)(const char *, const char *, void *);
+typedef int (*config_fn_t)(const struct config_context *, void *);
 
 int git_default_config(const char *, const char *, void *);
 
@@ -666,13 +695,6 @@ int git_config_get_expiry(const char *key, const char **output);
 
 /* parse either "this many days" integer, or "5.days.ago" approxidate */
 int git_config_get_expiry_in_days(const char *key, timestamp_t *, timestamp_t now);
-
-struct key_value_info {
-	const char *filename;
-	int linenr;
-	enum config_origin_type origin_type;
-	enum config_scope scope;
-};
 
 /**
  * First prints the error message specified by the caller in `err` and then

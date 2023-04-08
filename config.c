@@ -489,7 +489,7 @@ static int git_config_include(const char *var, const char *value, void *data)
 	 * Pass along all values, including "include" directives; this makes it
 	 * possible to query information on the includes themselves.
 	 */
-	ret = inc->fn(var, value, inc->data);
+	ret = inc->fn(ctx, inc->data);
 	if (ret < 0)
 		return ret;
 
@@ -665,13 +665,17 @@ static int config_parse_pair(const char *key, const char *value,
 {
 	char *canonical_name;
 	int ret;
+	struct config_context ctx = {
+		.value = value,
+	};
 
 	if (!strlen(key))
 		return error(_("empty config key"));
 	if (git_config_parse_key(key, &canonical_name, NULL))
 		return -1;
 
-	ret = (fn(canonical_name, value, data) < 0) ? -1 : 0;
+	ctx.key = canonical_name;
+	ret = (fn(&ctx, data) < 0) ? -1 : 0;
 	free(canonical_name);
 	return ret;
 }
@@ -931,6 +935,7 @@ static int get_value(struct config_source *cs, config_fn_t fn, void *data,
 	int c;
 	char *value;
 	int ret;
+	struct config_context ctx = CONFIG_CONTEXT_INIT;
 
 	/* Get the full name */
 	for (;;) {
@@ -959,7 +964,10 @@ static int get_value(struct config_source *cs, config_fn_t fn, void *data,
 	 * accurate line number in error messages.
 	 */
 	cs->linenr--;
-	ret = fn(name->buf, value, data);
+
+	ctx.key = name->buf;
+	ctx.value = value;
+	ret = fn(&ctx, data);
 	if (ret >= 0)
 		cs->linenr++;
 	return ret;
@@ -2295,6 +2303,7 @@ static void configset_iter(struct config_reader *reader, struct config_set *set,
 	struct string_list *values;
 	struct config_set_element *entry;
 	struct configset_list *list = &set->list;
+	struct config_context ctx = CONFIG_CONTEXT_INIT;
 
 	for (i = 0; i < list->nr; i++) {
 		entry = list->items[i].e;
@@ -2302,8 +2311,10 @@ static void configset_iter(struct config_reader *reader, struct config_set *set,
 		values = &entry->value_list;
 
 		config_reader_set_kvi(reader, values->items[value_index].util);
+		ctx.key = entry->key;
+		ctx.value = values->items[value_index].string;
 
-		if (fn(entry->key, values->items[value_index].string, data) < 0)
+		if (fn(&ctx, data) < 0)
 			git_die_config_linenr(entry->key,
 					      reader->config_kvi->filename,
 					      reader->config_kvi->linenr);
