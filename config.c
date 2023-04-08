@@ -489,7 +489,7 @@ static int git_config_include(const char *var, const char *value, void *data)
 	 * Pass along all values, including "include" directives; this makes it
 	 * possible to query information on the includes themselves.
 	 */
-	ret = inc->fn(var, value, inc->data);
+	ret = inc->fn(var, value, NULL, inc->data);
 	if (ret < 0)
 		return ret;
 
@@ -671,7 +671,7 @@ static int config_parse_pair(const char *key, const char *value,
 	if (git_config_parse_key(key, &canonical_name, NULL))
 		return -1;
 
-	ret = (fn(canonical_name, value, data) < 0) ? -1 : 0;
+	ret = (fn(canonical_name, value, NULL, data) < 0) ? -1 : 0;
 	free(canonical_name);
 	return ret;
 }
@@ -959,7 +959,7 @@ static int get_value(struct config_source *cs, config_fn_t fn, void *data,
 	 * accurate line number in error messages.
 	 */
 	cs->linenr--;
-	ret = fn(name->buf, value, data);
+	ret = fn(name->buf, value, NULL, data);
 	if (ret >= 0)
 		cs->linenr++;
 	return ret;
@@ -2303,7 +2303,7 @@ static void configset_iter(struct config_reader *reader, struct config_set *set,
 
 		config_reader_set_kvi(reader, values->items[value_index].util);
 
-		if (fn(entry->key, values->items[value_index].string, data) < 0)
+		if (fn(entry->key, values->items[value_index].string, NULL, data) < 0)
 			git_die_config_linenr(entry->key,
 					      reader->config_kvi->filename,
 					      reader->config_kvi->linenr);
