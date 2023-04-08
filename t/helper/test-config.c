@@ -69,7 +69,7 @@ static int parse_int_cb(const struct config_context *ctx, void *data)
 	const char *key_to_match = data;
 
 	if (!strcmp(key_to_match, var)) {
-		int parsed = git_config_int(value, value);
+		int parsed = git_config_int(value, value, ctx->kvi);
 		printf("%d\n", parsed);
 	}
 	return 0;
@@ -183,7 +183,7 @@ int cmd__config(int argc, const char **argv)
 				goto exit2;
 			}
 		}
-		if (!git_configset_get_value(&cs, argv[2], &v)) {
+		if (!git_configset_get_value(&cs, argv[2], &v, NULL)) {
 			if (!v)
 				printf("(NULL)\n");
 			else

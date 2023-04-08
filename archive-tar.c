@@ -419,7 +419,7 @@ static int git_tar_config(const struct config_context *ctx, void *cb)
 			tar_umask = umask(0);
 			umask(tar_umask);
 		} else {
-			tar_umask = git_config_int(var, value);
+			tar_umask = git_config_int(var, value, ctx->kvi);
 		}
 		return 0;
 	}

@@ -190,7 +190,7 @@ static int git_commit_graph_write_config(const struct config_context *ctx,
 	const char *var = ctx->key;
 	const char *value = ctx->value;
 	if (!strcmp(var, "commitgraph.maxnewfilters"))
-		write_opts.max_new_filters = git_config_int(var, value);
+		write_opts.max_new_filters = git_config_int(var, value, ctx->kvi);
 	/*
 	 * No need to fall-back to 'git_default_config', since this was already
 	 * called in 'cmd_commit_graph()'.
