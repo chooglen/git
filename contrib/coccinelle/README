@@ -92,3 +92,26 @@ that might be useful to developers.
 
    The absolute times will differ for you, but the relative speedup
    from caching should be on that order.
+
+== Authoring and reviewing coccinelle changes
+
+* When introducing and applying a new .cocci file, both the Git changes and
+  .cocci file should be reviewed.
+
+* Reviewers do not need to be coccinelle experts. To give a Reviewed-By, it is
+  enough for the reviewer to get a rough understanding of the proposed rules by
+  comparing the .cocci and Git changes, then checking that understanding
+  with the author.
+
+* Conversely, authors should consider that reviewers may not be coccinelle
+  experts. The primary aim should be to make .cocci files easy to understand,
+  e.g. by adding comments or by using rules that are easier to understand even
+  if they are less elegant.
+
+* .cocci rules should target only the problem it is trying to solve; "collateral
+  damage" is not allowed.
+
+* .cocci files used for refactoring should be temporarily kept in-tree to aid
+  the refactoring of out-of-tree code (e.g. in-flight topics). They should be
+  removed when enough time has been given for others to refactor their code,
+  i.e. ~1 release cycle.
