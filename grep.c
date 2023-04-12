@@ -91,9 +91,14 @@ int grep_config(const struct config_context *ctx, void *cb)
 	if (!strcmp(var, "color.grep"))
 		opt->color = git_config_colorbool(var, value);
 	if (!strcmp(var, "color.grep.match")) {
-		if (grep_config("color.grep.matchcontext", value, cb) < 0)
+		struct config_context inner = {
+			.value = value,
+		};
+		inner.key = "color.grep.matchcontext";
+		if (grep_config(&inner, cb) < 0)
 			return -1;
-		if (grep_config("color.grep.matchselected", value, cb) < 0)
+		inner.key = "color.grep.matchselected";
+		if (grep_config(&inner, cb) < 0)
 			return -1;
 	} else if (skip_prefix(var, "color.grep.", &slot)) {
 		int i = LOOKUP_CONFIG(color_grep_slots, slot);

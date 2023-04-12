@@ -11,6 +11,7 @@ typedef _sigset_t sigset_t;
 #undef _POSIX_THREAD_SAFE_FUNCTIONS
 #endif
 
+struct config_context;
 int mingw_core_config(const struct config_context *ctx, void *cb);
 #define platform_core_config mingw_core_config
 

@@ -800,7 +800,7 @@ static int write_one_config(const struct config_context *ctx, void *data)
 	 * environment, since git_config_set_multivar_gently only deals with
 	 * config-file writes
 	 */
-	int apply_failed = git_clone_config(key, value, data);
+	int apply_failed = git_clone_config(ctx, data);
 	if (apply_failed)
 		return apply_failed;
 

@@ -291,7 +291,7 @@ static int grep_cmd_config(const struct config_context *ctx, void *cb)
 {
 	const char *var = ctx->key;
 	const char *value = ctx->value;
-	int st = grep_config(var, value, cb);
+ 	int st = grep_config(ctx, cb);
 
 	if (git_color_config(var, value, cb) < 0)
 		st = -1;

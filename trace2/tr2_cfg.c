@@ -144,10 +144,14 @@ void tr2_list_env_vars_fl(const char *file, int line)
 void tr2_cfg_set_fl(const char *file, int line, const char *key,
 		    const char *value)
 {
+	struct config_context ctx = {
+		.key = key,
+		.value = value,
+	};
 	struct tr2_cfg_data data = { file, line };
 	struct key_value_info kvi = KVI_INIT;
 
 	ctx.kvi = &kvi;
 	if (tr2_cfg_load_patterns() > 0)
-		tr2_cfg_cb(key, value, &data);
+		tr2_cfg_cb(&ctx, &data);
 }

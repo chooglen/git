@@ -361,8 +361,11 @@ static void process_curl_messages(void)
 	}
 }
 
-static int http_options(const char *var, const char *value, void *cb)
+static int http_options(const struct config_context *ctx, void *data)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
+
 	if (!strcmp("http.version", var)) {
 		return git_config_string(&curl_http_version, var, value);
 	}
@@ -532,7 +535,7 @@ static int http_options(const char *var, const char *value, void *cb)
 	}
 
 	/* Fall back on the default ones */
-	return git_default_config(var, value, cb);
+	return git_default_config(ctx, data);
 }
 
 static int curl_empty_auth_enabled(void)

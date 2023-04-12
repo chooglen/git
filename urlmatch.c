@@ -554,7 +554,11 @@ static int cmp_matches(const struct urlmatch_item *a,
 int urlmatch_config_entry(const struct config_context *ctx, void *cb)
 {
 	const char *var = ctx->key;
-	const char *value = ctx->value;
+
+	struct config_context collect_ctx = {
+		.value = ctx->value,
+		.kvi = ctx->kvi,
+	};
 	struct string_list_item *item;
 	struct urlmatch_config *collect = cb;
 	struct urlmatch_item matched = {0};
@@ -567,7 +571,7 @@ int urlmatch_config_entry(const struct config_context *ctx, void *cb)
 
 	if (!skip_prefix(var, collect->section, &key) || *(key++) != '.') {
 		if (collect->cascade_fn)
-			return collect->cascade_fn(var, value, cb);
+			return collect->cascade_fn(ctx, cb);
 		return 0; /* not interested */
 	}
 	dot = strrchr(key, '.');
@@ -611,7 +615,9 @@ int urlmatch_config_entry(const struct config_context *ctx, void *cb)
 	strbuf_addstr(&synthkey, collect->section);
 	strbuf_addch(&synthkey, '.');
 	strbuf_addstr(&synthkey, key);
-	retval = collect->collect_fn(synthkey.buf, value, collect->cb);
+
+	collect_ctx.key = synthkey.buf;
+	retval = collect->collect_fn(&collect_ctx, collect->cb);
 
 	strbuf_release(&synthkey);
 	return retval;

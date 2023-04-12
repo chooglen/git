@@ -1501,7 +1501,6 @@ static int prune(int argc, const char **argv, const char *prefix)
 static int get_remote_default(const struct config_context *ctx, void *priv)
 {
 	const char *key = ctx->key;
-	const char *value = ctx->value;
 	if (strcmp(key, "remotes.default") == 0) {
 		int *found = priv;
 		*found = 1;

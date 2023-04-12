@@ -419,7 +419,6 @@ static int forbid_remote_url(const struct config_context *ctx,
 			     void *data UNUSED)
 {
 	const char *var = ctx->key;
-	const char *value = ctx->value;
 	const char *remote_name;
 	size_t remote_name_len;
 	const char *key;

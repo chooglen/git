@@ -134,7 +134,6 @@ static void print_helper_status(struct ref *ref)
 static int send_pack_config(const struct config_context *ctx, void *cb)
 {
 	const char *k = ctx->key;
-	const char *v = ctx->value;
 	if (!strcmp(k, "push.gpgsign")) {
 		const char *value;
 		if (!git_config_get_value("push.gpgsign", &value)) {

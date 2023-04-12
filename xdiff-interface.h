@@ -50,6 +50,7 @@ int buffer_is_binary(const char *ptr, unsigned long size);
 
 void xdiff_set_find_func(xdemitconf_t *xecfg, const char *line, int cflags);
 void xdiff_clear_find_func(xdemitconf_t *xecfg);
+struct config_context;
 int git_xmerge_config(const struct config_context *ctx, void *cb);
 extern int git_xmerge_style;
 
