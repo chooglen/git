@@ -675,7 +675,7 @@ out:
 }
 
 static int gitmodules_cb(const char *var, const char *value,
-			 const struct config_context *ctx UNUSED, void *data)
+			 const struct config_context *ctx, void *data)
 {
 	struct repository *repo = data;
 	struct parse_config_parameter parameter;
@@ -685,7 +685,7 @@ static int gitmodules_cb(const char *var, const char *value,
 	parameter.gitmodules_oid = null_oid();
 	parameter.overwrite = 1;
 
-	return parse_config(var, value, &parameter);
+	return parse_config(var, value, ctx, &parameter);
 }
 
 void repo_read_gitmodules(struct repository *repo, int skip_if_read)

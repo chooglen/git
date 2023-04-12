@@ -290,7 +290,7 @@ static int wait_all(void)
 static int grep_cmd_config(const char *var, const char *value,
 			   const struct config_context *ctx, void *cb)
 {
-	int st = grep_config(var, value, cb);
+	int st = grep_config(var, value, ctx, cb);
 
 	if (git_color_config(var, value, cb) < 0)
 		st = -1;

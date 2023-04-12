@@ -481,7 +481,7 @@ static int include_condition_is_true(struct config_source *cs,
 }
 
 static int git_config_include(const char *var, const char *value,
-			      const struct config_context *ctx UNUSED,
+			      const struct config_context *ctx,
 			      void *data)
 {
 	struct config_include_data *inc = data;

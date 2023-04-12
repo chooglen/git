@@ -1686,8 +1686,13 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	}
 
 	if (opts->conflict_style) {
+		struct key_value_info kvi = KVI_INIT;
+		struct config_context ctx = {
+			.kvi = &kvi,
+		};
 		opts->merge = 1; /* implied */
-		git_xmerge_config("merge.conflictstyle", opts->conflict_style, NULL);
+		git_xmerge_config("merge.conflictstyle", opts->conflict_style,
+				  &ctx, NULL);
 	}
 	if (opts->force) {
 		opts->discard_changes = 1;
