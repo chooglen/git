@@ -419,4 +419,31 @@ test_expect_success '--geometric -l with non-intact geometric sequence across OD
 	test_cmp expected-objects actual-objects.sorted
 '
 
+test_expect_success '--geometric -l disables writing bitmaps with non-local packfiles' '
+	test_when_finished "rm -fr shared member" &&
+
+	git init shared &&
+	test_commit_bulk -C shared --start=1 1 &&
+
+	git clone --shared shared member &&
+	test_commit_bulk -C member --start=2 1 &&
+
+	# When performing a geometric repack with `-l` while connecting to an
+	# alternate object database that has a packfile we do not have full
+	# coverage of objects. As a result, we expect that writing the bitmap
+	# will be disabled.
+	git -C member repack -l --geometric=2 --write-midx --write-bitmap-index 2>err &&
+	cat >expect <<-EOF &&
+	warning: disabling bitmap writing, as some objects are not being packed
+	EOF
+	test_cmp expect err &&
+	test ! -f member/.git/objects/pack/multi-pack-index-*.bitmap &&
+
+	# On the other hand, when we repack without `-l`, we should see that
+	# the bitmap gets created.
+	git -C member repack --geometric=2 --write-midx --write-bitmap-index 2>err &&
+	test_must_be_empty err &&
+	test -f member/.git/objects/pack/multi-pack-index-*.bitmap
+'
+
 test_done
