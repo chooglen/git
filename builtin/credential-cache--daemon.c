@@ -2,6 +2,7 @@
 #include "abspath.h"
 #include "alloc.h"
 #include "gettext.h"
+#include "object-file.h"
 #include "parse-options.h"
 
 #ifndef NO_UNIX_SOCKETS
@@ -133,6 +134,9 @@ static void serve_one_client(FILE *in, FILE *out)
 			if (e->item.password_expiry_utc != TIME_MAX)
 				fprintf(out, "password_expiry_utc=%"PRItime"\n",
 					e->item.password_expiry_utc);
+			if (e->item.oauth_refresh_token)
+				fprintf(out, "oauth_refresh_token=%s\n",
+					e->item.oauth_refresh_token);
 		}
 	}
 	else if (!strcmp(action.buf, "exit")) {

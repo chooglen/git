@@ -1,10 +1,11 @@
 #include "git-compat-util.h"
-#include "cache.h"
+#include "advice.h"
 #include "config.h"
 #include "branch.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
+#include "object-name.h"
 #include "refs.h"
 #include "refspec.h"
 #include "remote.h"
@@ -837,31 +838,4 @@ void die_if_checked_out(const char *branch, int ignore_current_worktree)
 	}
 
 	free_worktrees(worktrees);
-}
-
-int replace_each_worktree_head_symref(const char *oldref, const char *newref,
-				      const char *logmsg)
-{
-	int ret = 0;
-	struct worktree **worktrees = get_worktrees();
-	int i;
-
-	for (i = 0; worktrees[i]; i++) {
-		struct ref_store *refs;
-
-		if (worktrees[i]->is_detached)
-			continue;
-		if (!worktrees[i]->head_ref)
-			continue;
-		if (strcmp(oldref, worktrees[i]->head_ref))
-			continue;
-
-		refs = get_worktree_ref_store(worktrees[i]);
-		if (refs_create_symref(refs, "HEAD", newref, logmsg))
-			ret = error(_("HEAD of working tree %s is not updated"),
-				    worktrees[i]->path);
-	}
-
-	free_worktrees(worktrees);
-	return ret;
 }

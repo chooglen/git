@@ -1,11 +1,11 @@
 #include "git-compat-util.h"
 #include "parse-options.h"
 #include "branch.h"
-#include "cache.h"
 #include "commit.h"
 #include "color.h"
 #include "environment.h"
 #include "gettext.h"
+#include "object-name.h"
 #include "string-list.h"
 #include "strvec.h"
 #include "oid-array.h"
@@ -207,6 +207,22 @@ int parse_opt_string_list(const struct option *opt, const char *arg, int unset)
 		return -1;
 
 	string_list_append(v, arg);
+	return 0;
+}
+
+int parse_opt_strvec(const struct option *opt, const char *arg, int unset)
+{
+	struct strvec *v = opt->value;
+
+	if (unset) {
+		strvec_clear(v);
+		return 0;
+	}
+
+	if (!arg)
+		return -1;
+
+	strvec_push(v, arg);
 	return 0;
 }
 

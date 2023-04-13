@@ -1,4 +1,4 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
@@ -9,6 +9,8 @@
 #include "pack-mtimes.h"
 #include "oidmap.h"
 #include "pack-objects.h"
+#include "pack-revindex.h"
+#include "wrapper.h"
 
 void reset_pack_idx_option(struct pack_idx_option *opts)
 {
@@ -568,6 +570,8 @@ void stage_tmp_packfiles(struct strbuf *name_buffer,
 		rename_tmp_packfile(name_buffer, rev_tmp_name, "rev");
 	if (mtimes_tmp_name)
 		rename_tmp_packfile(name_buffer, mtimes_tmp_name, "mtimes");
+
+	free((char *)rev_tmp_name);
 }
 
 void write_promisor_file(const char *promisor_name, struct ref **sought, int nr_sought)

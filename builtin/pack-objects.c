@@ -33,6 +33,7 @@
 #include "strvec.h"
 #include "list.h"
 #include "packfile.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "replace-object.h"
 #include "dir.h"
@@ -3360,16 +3361,16 @@ static void read_packs_list_from_stdin(void)
 	}
 
 	string_list_sort(&include_packs);
+	string_list_remove_duplicates(&include_packs, 0);
 	string_list_sort(&exclude_packs);
+	string_list_remove_duplicates(&exclude_packs, 0);
 
 	for (p = get_all_packs(the_repository); p; p = p->next) {
 		const char *pack_name = pack_basename(p);
 
-		item = string_list_lookup(&include_packs, pack_name);
-		if (!item)
-			item = string_list_lookup(&exclude_packs, pack_name);
-
-		if (item)
+		if ((item = string_list_lookup(&include_packs, pack_name)))
+			item->util = p;
+		if ((item = string_list_lookup(&exclude_packs, pack_name)))
 			item->util = p;
 	}
 
@@ -4294,9 +4295,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	}
 
 	reset_pack_idx_option(&pack_idx_opts);
+	pack_idx_opts.flags |= WRITE_REV;
 	git_config(git_pack_config, NULL);
-	if (git_env_bool(GIT_TEST_WRITE_REV_INDEX, 0))
-		pack_idx_opts.flags |= WRITE_REV;
+	if (git_env_bool(GIT_TEST_NO_WRITE_REV_INDEX, 0))
+		pack_idx_opts.flags &= ~WRITE_REV;
 
 	progress = isatty(2);
 	argc = parse_options(argc, argv, prefix, pack_objects_options,

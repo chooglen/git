@@ -15,11 +15,14 @@
 #include "commit.h"
 #include "object.h"
 #include "tag.h"
+#include "trace.h"
 #include "tree-walk.h"
 #include "tree.h"
+#include "object-file.h"
 #include "object-store.h"
 #include "midx.h"
 #include "commit-graph.h"
+#include "pack-revindex.h"
 #include "promisor-remote.h"
 #include "wrapper.h"
 
@@ -2151,7 +2154,7 @@ int for_each_object_in_pack(struct packed_git *p,
 	int r = 0;
 
 	if (flags & FOR_EACH_OBJECT_PACK_ORDER) {
-		if (load_pack_revindex(p))
+		if (load_pack_revindex(the_repository, p))
 			return -1;
 	}
 

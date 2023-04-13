@@ -118,14 +118,17 @@ test_expect_success '"add" worktree creating new branch' '
 	)
 '
 
-test_expect_success 'die the same branch is already checked out' '
+test_expect_success 'die if the same branch is already checked out' '
 	(
 		cd here &&
-		test_must_fail git checkout newmain
+		test_must_fail git checkout newmain &&
+		test_must_fail git checkout -B newmain &&
+		test_must_fail git switch newmain &&
+		test_must_fail git switch -C newmain
 	)
 '
 
-test_expect_success SYMLINKS 'die the same branch is already checked out (symlink)' '
+test_expect_success SYMLINKS 'die if the same branch is already checked out (symlink)' '
 	head=$(git -C there rev-parse --git-path HEAD) &&
 	ref=$(git -C there symbolic-ref HEAD) &&
 	rm "$head" &&
@@ -133,17 +136,34 @@ test_expect_success SYMLINKS 'die the same branch is already checked out (symlin
 	test_must_fail git -C here checkout newmain
 '
 
-test_expect_success 'not die the same branch is already checked out' '
+test_expect_success 'allow creating multiple worktrees for same branch with force' '
+	git worktree add --force anothernewmain newmain
+'
+
+test_expect_success 'allow checkout/reset from the conflicted branch' '
 	(
 		cd here &&
-		git worktree add --force anothernewmain newmain
+		git checkout -b conflictedmain newmain &&
+		git checkout -B conflictedmain newmain &&
+		git switch -C conflictedmain newmain
 	)
 '
 
-test_expect_success 'not die on re-checking out current branch' '
+test_expect_success 'and not die on re-checking out current branch even if conflicted' '
 	(
 		cd there &&
-		git checkout newmain
+		git checkout newmain &&
+		git switch newmain
+	)
+'
+
+test_expect_success 'unless using force without --ignore-other-worktrees' '
+	(
+		cd there &&
+		test_must_fail git checkout -B newmain &&
+		test_must_fail git switch -C newmain &&
+		git checkout --ignore-other-worktrees -B newmain &&
+		git switch --ignore-other-worktrees -C newmain
 	)
 '
 
@@ -298,17 +318,25 @@ test_expect_success '"add" no auto-vivify with --detach and <branch> omitted' '
 	test_must_fail git -C mish/mash symbolic-ref HEAD
 '
 
-test_expect_success '"add" -b/-B mutually exclusive' '
-	test_must_fail git worktree add -b poodle -B poodle bamboo main
-'
+# Helper function to test mutually exclusive options.
+#
+# Note: Quoted arguments containing spaces are not supported.
+test_wt_add_excl () {
+	local opts="$*" &&
+	test_expect_success "'worktree add' with '$opts' has mutually exclusive options" '
+		test_must_fail git worktree add $opts 2>actual &&
+		grep -E "fatal:( options)? .* cannot be used together" actual
+	'
+}
 
-test_expect_success '"add" -b/--detach mutually exclusive' '
-	test_must_fail git worktree add -b poodle --detach bamboo main
-'
-
-test_expect_success '"add" -B/--detach mutually exclusive' '
-	test_must_fail git worktree add -B poodle --detach bamboo main
-'
+test_wt_add_excl -b poodle -B poodle bamboo main
+test_wt_add_excl -b poodle --detach bamboo main
+test_wt_add_excl -B poodle --detach bamboo main
+test_wt_add_excl -B poodle --orphan poodle bamboo
+test_wt_add_excl -b poodle --orphan poodle bamboo
+test_wt_add_excl --orphan poodle --detach bamboo
+test_wt_add_excl --orphan poodle --no-checkout bamboo
+test_wt_add_excl --orphan poodle bamboo main
 
 test_expect_success '"add -B" fails if the branch is checked out' '
 	git rev-parse newmain >before &&
@@ -329,6 +357,64 @@ test_expect_success 'add --quiet' '
 	git worktree add --quiet another-worktree main 2>actual &&
 	test_must_be_empty actual
 '
+
+test_expect_success '"add --orphan"' '
+	test_when_finished "git worktree remove -f -f orphandir" &&
+	git worktree add --orphan neworphan orphandir &&
+	echo refs/heads/neworphan >expected &&
+	git -C orphandir symbolic-ref HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success '"add --orphan" fails if the branch already exists' '
+	test_when_finished "git branch -D existingbranch" &&
+	test_when_finished "git worktree remove -f -f orphandir" &&
+	git worktree add -b existingbranch orphandir main &&
+	test_must_fail git worktree add --orphan existingbranch orphandir2 &&
+	test_path_is_missing orphandir2
+'
+
+test_expect_success '"add --orphan" with empty repository' '
+	test_when_finished "rm -rf empty_repo" &&
+	echo refs/heads/newbranch >expected &&
+	GIT_DIR="empty_repo" git init --bare &&
+	git -C empty_repo  worktree add --orphan newbranch worktreedir &&
+	git -C empty_repo/worktreedir symbolic-ref HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success '"add" worktree with orphan branch and lock' '
+	git worktree add --lock --orphan orphanbr orphan-with-lock &&
+	test_when_finished "git worktree unlock orphan-with-lock || :" &&
+	test -f .git/worktrees/orphan-with-lock/locked
+'
+
+test_expect_success '"add" worktree with orphan branch, lock, and reason' '
+	lock_reason="why not" &&
+	git worktree add --detach --lock --reason "$lock_reason" orphan-with-lock-reason main &&
+	test_when_finished "git worktree unlock orphan-with-lock-reason || :" &&
+	test -f .git/worktrees/orphan-with-lock-reason/locked &&
+	echo "$lock_reason" >expect &&
+	test_cmp expect .git/worktrees/orphan-with-lock-reason/locked
+'
+
+# Note: Quoted arguments containing spaces are not supported.
+test_wt_add_empty_repo_orphan_hint () {
+	local context="$1" &&
+	shift &&
+	local opts="$*" &&
+	test_expect_success "'worktree add' show orphan hint in empty repo w/ $context" '
+		test_when_finished "rm -rf empty_repo" &&
+		GIT_DIR="empty_repo" git init --bare &&
+		test_must_fail git -C empty_repo worktree add $opts foobar/ 2>actual &&
+		! grep "error: unknown switch" actual &&
+		grep "hint: If you meant to create a worktree containing a new orphan branch" actual
+	'
+}
+
+test_wt_add_empty_repo_orphan_hint 'DWIM'
+test_wt_add_empty_repo_orphan_hint '-b' -b foobar_branch
+test_wt_add_empty_repo_orphan_hint '-B' -B foobar_branch
 
 test_expect_success 'local clone from linked checkout' '
 	git clone --local here here-clone &&
@@ -445,6 +531,14 @@ setup_remote_repo () {
 		git fetch --all
 	)
 }
+
+test_expect_success '"add" <path> <remote/branch> w/ no HEAD' '
+	test_when_finished rm -rf repo_upstream repo_local foo &&
+	setup_remote_repo repo_upstream repo_local &&
+	git -C repo_local config --bool core.bare true &&
+	git -C repo_local branch -D main &&
+	git -C repo_local worktree add ./foo repo_upstream/foo
+'
 
 test_expect_success '--no-track avoids setting up tracking' '
 	test_when_finished rm -rf repo_upstream repo_local foo &&
