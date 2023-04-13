@@ -807,12 +807,27 @@ $sender = sanitize_address($sender);
 $time = time - scalar $#files;
 
 if ($validate) {
+	# FIFOs can only be read once, exclude them from validation.
+	my @real_files = ();
 	foreach my $f (@files) {
 		unless (-p $f) {
-		        pre_process_file($f, 1);
-			validate_patch($f, $target_xfer_encoding);
+			push(@real_files, $f);
 		}
 	}
+
+	# Run the loop once again to avoid gaps in the counter due to FIFO
+	# arguments provided by the user.
+	my $num = 1;
+	my $num_files = scalar @real_files;
+	$ENV{GIT_SENDEMAIL_FILE_TOTAL} = "$num_files";
+	foreach my $r (@real_files) {
+		$ENV{GIT_SENDEMAIL_FILE_COUNTER} = "$num";
+		pre_process_file($r, 1);
+		validate_patch($r, $target_xfer_encoding);
+		$num += 1;
+	}
+	delete $ENV{GIT_SENDEMAIL_FILE_COUNTER};
+	delete $ENV{GIT_SENDEMAIL_FILE_TOTAL};
 }
 
 @files = handle_backup_files(@files);

@@ -588,6 +588,45 @@ test_expect_success $PREREQ "--validate hook supports header argument" '
 		outdir/000?-*.patch
 '
 
+expected_file_counter_output () {
+	total=$1
+	count=0
+	while test $count -ne $total
+	do
+		count=$((count + 1)) &&
+		echo "$count/$total" || return
+	done
+}
+
+test_expect_success $PREREQ '--validate hook allows counting of messages' '
+	test_when_finished "rm my-hooks.log" &&
+	test_config core.hooksPath "my-hooks" &&
+
+	write_script my-hooks/sendemail-validate <<-\EOF &&
+		num=$GIT_SENDEMAIL_FILE_COUNTER &&
+		tot=$GIT_SENDEMAIL_FILE_TOTAL &&
+		echo "$num/$tot" >>my-hooks.log || exit 1
+	EOF
+
+	>my-hooks.log &&
+	expected_file_counter_output 1 >expect &&
+	git send-email \
+		--from="Example <from@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		--validate $patches &&
+	test_cmp expect my-hooks.log &&
+
+	>my-hooks.log &&
+	expected_file_counter_output 2 >expect &&
+	git send-email \
+		--from="Example <from@example.com>" \
+		--to=nobody@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		--validate $patches $patches &&
+	test_cmp expect my-hooks.log
+'
+
 for enc in 7bit 8bit quoted-printable base64
 do
 	test_expect_success $PREREQ "--transfer-encoding=$enc produces correct header" '

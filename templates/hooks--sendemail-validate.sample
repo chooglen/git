@@ -1,0 +1,84 @@
+#!/bin/sh
+
+# An example hook script to validate a patch (and/or patch series) before
+# sending it via email.
+#
+# The hook should exit with non-zero status after issuing an appropriate
+# message if it wants to prevent the email(s) from being sent.
+#
+# To enable this hook, rename this file to "sendemail-validate".
+#
+# By default, it will only check that the patch(es) can be applied on top of
+# the default upstream branch without conflicts. Replace the XXX placeholders
+# with appropriate checks according to your needs.
+
+set -e
+
+validate_cover_letter()
+{
+	file="$1"
+	# XXX: Add appropriate checks here (e.g. spell checking).
+}
+
+validate_patch()
+{
+	file="$1"
+	# Ensure that the patch applies without conflicts to the latest
+	# upstream version.
+	git am -3 "$file" || die "failed to apply patch on upstream repo"
+	# XXX: Add appropriate checks here (e.g. checkpatch.pl).
+}
+
+validate_series()
+{
+	# XXX: Add appropriate checks here (e.g. quick build, etc.).
+}
+
+die()
+{
+	echo "sendemail-validate: error: $*" >&2
+	exit 1
+}
+
+get_work_dir()
+{
+	git config --get sendemail.validateWorkdir || {
+		# Initialize it to a temp dir, if unset.
+		git config --add sendemail.validateWorkdir "$(mktemp -d)"
+		git config --get sendemail.validateWorkdir
+	}
+}
+
+get_upstream_url()
+{
+	git config --get remote.origin.url ||
+		die "cannot get remote.origin.url"
+}
+
+clone_upstream()
+{
+	workdir="$1"
+	url="$(get_upstream_url)"
+	rm -rf -- "$workdir"
+	git clone --depth=1 "$url" "$workdir" ||
+		die "failed to clone upstream repository"
+}
+
+# main -------------------------------------------------------------------------
+
+workdir=$(get_work_dir)
+if [ "$GIT_SENDEMAIL_FILE_COUNTER" = 1 ]; then
+	clone_upstream "$workdir"
+fi
+cd "$workdir"
+export GIT_DIR="$workdir/.git"
+
+if grep -q "^diff --git " "$1"; then
+	validate_patch "$1"
+else
+	validate_cover_letter "$1"
+fi
+
+if [ "$GIT_SENDEMAIL_FILE_COUNTER" = "$GIT_SENDEMAIL_FILE_TOTAL" ]; then
+	validate_series || die "patch series was rejected"
+fi
