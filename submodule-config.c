@@ -6,7 +6,7 @@
 #include "hex.h"
 #include "path.h"
 #include "repository.h"
-#include "config.h"
+#include "config-ll.h"
 #include "submodule-config.h"
 #include "submodule.h"
 #include "strbuf.h"
