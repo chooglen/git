@@ -46,6 +46,7 @@ static int iterate_cb(const struct config_context *ctx, void *data UNUSED)
 {
 	const char *var = ctx->key;
 	const char *value = ctx->value;
+	const struct key_value_info *kvi = ctx->kvi;
 	static int nr;
 
 	if (nr++)
@@ -53,10 +54,10 @@ static int iterate_cb(const struct config_context *ctx, void *data UNUSED)
 
 	printf("key=%s\n", var);
 	printf("value=%s\n", value ? value : "(null)");
-	printf("origin=%s\n", current_config_origin_type());
-	printf("name=%s\n", current_config_name());
-	printf("lno=%d\n", current_config_line());
-	printf("scope=%s\n", config_scope_name(current_config_scope()));
+	printf("origin=%s\n", config_origin_type_name(kvi->origin_type));
+	printf("name=%s\n", kvi->filename ? kvi->filename : "");
+	printf("lno=%d\n", kvi->linenr);
+	printf("scope=%s\n", config_scope_name(kvi->scope));
 
 	return 0;
 }

@@ -651,15 +651,17 @@ static int config_read_push_default(const struct config_context *ctx,
 {
 	const char *key = ctx->key;
 	const char *value = ctx->value;
+	const struct key_value_info *kvi = ctx->kvi;
+
 	struct push_default_info* info = cb;
 	if (strcmp(key, "remote.pushdefault") ||
 	    !value || strcmp(value, info->old_name))
 		return 0;
 
-	info->scope = current_config_scope();
+	info->scope = kvi->scope;
 	strbuf_reset(&info->origin);
-	strbuf_addstr(&info->origin, current_config_name());
-	info->linenr = current_config_line();
+	strbuf_addstr(&info->origin, config_origin_type_name(kvi->origin_type));
+	info->linenr = kvi->linenr;
 
 	return 0;
 }
