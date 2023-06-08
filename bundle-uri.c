@@ -223,8 +223,10 @@ static int bundle_list_update(const char *key, const char *value,
 	return 0;
 }
 
-static int config_to_bundle_list(const char *key, const char *value, void *data)
+static int config_to_bundle_list(const struct config_context *ctx, void *data)
 {
+	const char *key = ctx->key;
+	const char *value = ctx->value;
 	struct bundle_list *list = data;
 	return bundle_list_update(key, value, list);
 }
@@ -870,8 +872,10 @@ cached:
 	return advertise_bundle_uri;
 }
 
-static int config_to_packet_line(const char *key, const char *value, void *data)
+static int config_to_packet_line(const struct config_context *ctx, void *data)
 {
+	const char *key = ctx->key;
+	const char *value = ctx->value;
 	struct packet_reader *writer = data;
 
 	if (starts_with(key, "bundle."))

@@ -481,9 +481,11 @@ static struct {
 	{ "ifmissing", TRAILER_IF_MISSING }
 };
 
-static int git_trailer_default_config(const char *conf_key, const char *value,
+static int git_trailer_default_config(const struct config_context *ctx,
 				      void *cb UNUSED)
 {
+	const char *conf_key = ctx->key;
+	const char *value = ctx->value;
 	const char *trailer_item, *variable_name;
 
 	if (!skip_prefix(conf_key, "trailer.", &trailer_item))
@@ -513,9 +515,11 @@ static int git_trailer_default_config(const char *conf_key, const char *value,
 	return 0;
 }
 
-static int git_trailer_config(const char *conf_key, const char *value,
+static int git_trailer_config(const struct config_context *ctx,
 			      void *cb UNUSED)
 {
+	const char *conf_key = ctx->key;
+	const char *value = ctx->value;
 	const char *trailer_item, *variable_name;
 	struct arg_item *item;
 	struct conf_info *conf;

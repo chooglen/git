@@ -973,8 +973,10 @@ void string_list_add_refs_from_colon_sep(struct string_list *list,
 	free(globs_copy);
 }
 
-static int notes_display_config(const char *k, const char *v, void *cb)
+static int notes_display_config(const struct config_context *ctx, void *cb)
 {
+	const char *k = ctx->key;
+	const char *v = ctx->value;
 	int *load_refs = cb;
 
 	if (*load_refs && !strcmp(k, "notes.displayref")) {

@@ -267,9 +267,11 @@ static const char *abbrev_ref(const char *name, const char *prefix)
 }
 #define abbrev_branch(name) abbrev_ref((name), "refs/heads/")
 
-static int config_read_branches(const char *key, const char *value,
+static int config_read_branches(const struct config_context *ctx,
 				void *data UNUSED)
 {
+	const char *key = ctx->key;
+	const char *value = ctx->value;
 	const char *orig_key = key;
 	char *name;
 	struct string_list_item *item;
@@ -644,9 +646,11 @@ struct push_default_info
 	int linenr;
 };
 
-static int config_read_push_default(const char *key, const char *value,
-	void *cb)
+static int config_read_push_default(const struct config_context *ctx,
+				    void *cb)
 {
+	const char *key = ctx->key;
+	const char *value = ctx->value;
 	struct push_default_info* info = cb;
 	if (strcmp(key, "remote.pushdefault") ||
 	    !value || strcmp(value, info->old_name))
@@ -1494,8 +1498,10 @@ static int prune(int argc, const char **argv, const char *prefix)
 	return result;
 }
 
-static int get_remote_default(const char *key, const char *value UNUSED, void *priv)
+static int get_remote_default(const struct config_context *ctx, void *priv)
 {
+	const char *key = ctx->key;
+	const char *value = ctx->value;
 	if (strcmp(key, "remotes.default") == 0) {
 		int *found = priv;
 		*found = 1;

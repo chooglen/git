@@ -692,8 +692,10 @@ static const char *add_prefix(const char *prefix, const char *path)
 	return prefix_path(prefix, prefix ? strlen(prefix) : 0, path);
 }
 
-static int git_blame_config(const char *var, const char *value, void *cb)
+static int git_blame_config(const struct config_context *ctx, void *cb)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	if (!strcmp(var, "blame.showroot")) {
 		show_root = git_config_bool(var, value);
 		return 0;
@@ -765,7 +767,7 @@ static int git_blame_config(const char *var, const char *value, void *cb)
 	if (userdiff_config(var, value) < 0)
 		return -1;
 
-	return git_default_config(var, value, cb);
+	return git_default_config(ctx, cb);
 }
 
 static int blame_copy_callback(const struct option *option, const char *arg, int unset)

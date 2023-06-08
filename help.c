@@ -309,8 +309,10 @@ void load_command_list(const char *prefix,
 	exclude_cmds(other_cmds, main_cmds);
 }
 
-static int get_colopts(const char *var, const char *value, void *data)
+static int get_colopts(const struct config_context *ctx, void *data)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	unsigned int *colopts = data;
 
 	if (starts_with(var, "column."))
@@ -459,8 +461,10 @@ void list_developer_interfaces_help(void)
 	putchar('\n');
 }
 
-static int get_alias(const char *var, const char *value, void *data)
+static int get_alias(const struct config_context *ctx, void *data)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	struct string_list *list = data;
 
 	if (skip_prefix(var, "alias.", &var))
@@ -542,9 +546,11 @@ static struct cmdnames aliases;
 #define AUTOCORRECT_NEVER (-2)
 #define AUTOCORRECT_IMMEDIATELY (-1)
 
-static int git_unknown_cmd_config(const char *var, const char *value,
+static int git_unknown_cmd_config(const struct config_context *ctx,
 				  void *cb UNUSED)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	const char *p;
 
 	if (!strcmp(var, "help.autocorrect")) {

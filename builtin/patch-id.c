@@ -196,8 +196,10 @@ struct patch_id_opts {
 	int verbatim;
 };
 
-static int git_patch_id_config(const char *var, const char *value, void *cb)
+static int git_patch_id_config(const struct config_context *ctx, void *cb)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	struct patch_id_opts *opts = cb;
 
 	if (!strcmp(var, "patchid.stable")) {
@@ -209,7 +211,7 @@ static int git_patch_id_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	return git_default_config(var, value, cb);
+	return git_default_config(ctx, cb);
 }
 
 int cmd_patch_id(int argc, const char **argv, const char *prefix)

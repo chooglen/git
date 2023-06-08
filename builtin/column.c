@@ -13,8 +13,10 @@ static const char * const builtin_column_usage[] = {
 };
 static unsigned int colopts;
 
-static int column_config(const char *var, const char *value, void *cb)
+static int column_config(const struct config_context *ctx, void *cb)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	return git_column_config(var, value, cb, &colopts);
 }
 

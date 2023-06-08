@@ -213,9 +213,11 @@ static void show_config_scope(struct strbuf *buf)
 	strbuf_addch(buf, term);
 }
 
-static int show_all_config(const char *key_, const char *value_,
+static int show_all_config(const struct config_context *ctx,
 			   void *cb UNUSED)
 {
+	const char *key_ = ctx->key;
+	const char *value_ = ctx->value;
 	if (show_origin || show_scope) {
 		struct strbuf buf = STRBUF_INIT;
 		if (show_scope)
@@ -298,8 +300,10 @@ static int format_config(struct strbuf *buf, const char *key_, const char *value
 	return 0;
 }
 
-static int collect_config(const char *key_, const char *value_, void *cb)
+static int collect_config(const struct config_context *ctx, void *cb)
 {
+	const char *key_ = ctx->key;
+	const char *value_ = ctx->value;
 	struct strbuf_list *values = cb;
 
 	if (!use_key_regexp && strcmp(key_, key))
@@ -465,9 +469,11 @@ static const char *get_color_slot;
 static const char *get_colorbool_slot;
 static char parsed_color[COLOR_MAXLEN];
 
-static int git_get_color_config(const char *var, const char *value,
+static int git_get_color_config(const struct config_context *ctx,
 				void *cb UNUSED)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	if (!strcmp(var, get_color_slot)) {
 		if (!value)
 			config_error_nonbool(var);
@@ -497,9 +503,11 @@ static void get_color(const char *var, const char *def_color)
 static int get_colorbool_found;
 static int get_diff_color_found;
 static int get_color_ui_found;
-static int git_get_colorbool_config(const char *var, const char *value,
+static int git_get_colorbool_config(const struct config_context *ctx,
 				    void *data UNUSED)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	if (!strcmp(var, get_colorbool_slot))
 		get_colorbool_found = git_config_colorbool(var, value);
 	else if (!strcmp(var, "diff.color"))
@@ -555,8 +563,10 @@ struct urlmatch_current_candidate_value {
 	struct strbuf value;
 };
 
-static int urlmatch_collect_fn(const char *var, const char *value, void *cb)
+static int urlmatch_collect_fn(const struct config_context *ctx, void *cb)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	struct string_list *values = cb;
 	struct string_list_item *item = string_list_insert(values, var);
 	struct urlmatch_current_candidate_value *matched = item->util;

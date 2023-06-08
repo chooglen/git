@@ -775,8 +775,10 @@ static int checkout(int submodule_progress, int filter_submodules)
 	return err;
 }
 
-static int git_clone_config(const char *k, const char *v, void *cb)
+static int git_clone_config(const struct config_context *ctx, void *cb)
 {
+	const char *k = ctx->key;
+	const char *v = ctx->value;
 	if (!strcmp(k, "clone.defaultremotename")) {
 		free(remote_name);
 		remote_name = xstrdup(v);
@@ -786,11 +788,13 @@ static int git_clone_config(const char *k, const char *v, void *cb)
 	if (!strcmp(k, "clone.filtersubmodules"))
 		config_filter_submodules = git_config_bool(k, v);
 
-	return git_default_config(k, v, cb);
+	return git_default_config(ctx, cb);
 }
 
-static int write_one_config(const char *key, const char *value, void *data)
+static int write_one_config(const struct config_context *ctx, void *data)
 {
+	const char *key = ctx->key;
+	const char *value = ctx->value;
 	/*
 	 * give git_clone_config a chance to write config values back to the
 	 * environment, since git_config_set_multivar_gently only deals with

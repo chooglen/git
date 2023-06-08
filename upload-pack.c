@@ -1298,8 +1298,10 @@ static int parse_object_filter_config(const char *var, const char *value,
 	return 0;
 }
 
-static int upload_pack_config(const char *var, const char *value, void *cb_data)
+static int upload_pack_config(const struct config_context *ctx, void *cb_data)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	struct upload_pack_data *data = cb_data;
 
 	if (!strcmp("uploadpack.allowtipsha1inwant", var)) {
@@ -1339,8 +1341,11 @@ static int upload_pack_config(const char *var, const char *value, void *cb_data)
 	return parse_hide_refs_config(var, value, "uploadpack", &data->hidden_refs);
 }
 
-static int upload_pack_protected_config(const char *var, const char *value, void *cb_data)
+static int upload_pack_protected_config(const struct config_context *ctx,
+					void *cb_data)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	struct upload_pack_data *data = cb_data;
 
 	if (!strcmp("uploadpack.packobjectshook", var))

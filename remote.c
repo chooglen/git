@@ -348,8 +348,10 @@ static void read_branches_file(struct remote_state *remote_state,
 	remote->fetch_tags = 1; /* always auto-follow */
 }
 
-static int handle_config(const char *key, const char *value, void *cb)
+static int handle_config(const struct config_context *ctx, void *cb)
 {
+	const char *key = ctx->key;
+	const char *value = ctx->value;
 	const char *name;
 	size_t namelen;
 	const char *subkey;

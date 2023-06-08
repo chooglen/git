@@ -2186,9 +2186,11 @@ static int update_clone_task_finished(int result,
 	return 0;
 }
 
-static int git_update_clone_config(const char *var, const char *value,
+static int git_update_clone_config(const struct config_context *ctx,
 				   void *cb)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	int *max_jobs = cb;
 
 	if (!strcmp(var, "submodule.fetchjobs"))

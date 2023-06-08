@@ -81,9 +81,11 @@ static struct option *add_common_options(struct option *prev)
 	return parse_options_concat(common_opts, prev);
 }
 
-static int git_multi_pack_index_write_config(const char *var, const char *value,
+static int git_multi_pack_index_write_config(const struct config_context *ctx,
 					     void *cb UNUSED)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	if (!strcmp(var, "pack.writebitmaphashcache")) {
 		if (git_config_bool(var, value))
 			opts.flags |= MIDX_WRITE_BITMAP_HASH_CACHE;

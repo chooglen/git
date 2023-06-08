@@ -184,9 +184,11 @@ static int write_option_max_new_filters(const struct option *opt,
 	return 0;
 }
 
-static int git_commit_graph_write_config(const char *var, const char *value,
+static int git_commit_graph_write_config(const struct config_context *ctx,
 					 void *cb UNUSED)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	if (!strcmp(var, "commitgraph.maxnewfilters"))
 		write_opts.max_new_filters = git_config_int(var, value);
 	/*

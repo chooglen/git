@@ -514,8 +514,10 @@ no_prevention_needed:
 	startup_info->original_cwd = NULL;
 }
 
-static int read_worktree_config(const char *var, const char *value, void *vdata)
+static int read_worktree_config(const struct config_context *ctx, void *vdata)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	struct repository_format *data = vdata;
 
 	if (strcmp(var, "core.bare") == 0) {
@@ -585,8 +587,10 @@ static enum extension_result handle_extension(const char *var,
 	return EXTENSION_UNKNOWN;
 }
 
-static int check_repo_format(const char *var, const char *value, void *vdata)
+static int check_repo_format(const struct config_context *ctx, void *vdata)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	struct repository_format *data = vdata;
 	const char *ext;
 
@@ -614,7 +618,7 @@ static int check_repo_format(const char *var, const char *value, void *vdata)
 		}
 	}
 
-	return read_worktree_config(var, value, vdata);
+	return read_worktree_config(ctx, vdata);
 }
 
 static int check_repository_format_gently(const char *gitdir, struct repository_format *candidate, int *nongit_ok)
@@ -1113,8 +1117,10 @@ struct safe_directory_data {
 	int is_safe;
 };
 
-static int safe_directory_cb(const char *key, const char *value, void *d)
+static int safe_directory_cb(const struct config_context *ctx, void *d)
 {
+	const char *key = ctx->key;
+	const char *value = ctx->value;
 	struct safe_directory_data *data = d;
 
 	if (strcmp(key, "safe.directory"))
@@ -1169,8 +1175,10 @@ static int ensure_valid_ownership(const char *gitfile,
 	return data.is_safe;
 }
 
-static int allowed_bare_repo_cb(const char *key, const char *value, void *d)
+static int allowed_bare_repo_cb(const struct config_context *ctx, void *d)
 {
+	const char *key = ctx->key;
+	const char *value = ctx->value;
 	enum allowed_bare_repo *allowed_bare_repo = d;
 
 	if (strcasecmp(key, "safe.bareRepository"))

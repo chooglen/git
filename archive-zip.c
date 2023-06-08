@@ -615,9 +615,11 @@ static void dos_time(timestamp_t *timestamp, int *dos_date, int *dos_time)
 	*dos_time = tm.tm_sec / 2 + tm.tm_min * 32 + tm.tm_hour * 2048;
 }
 
-static int archive_zip_config(const char *var, const char *value,
+static int archive_zip_config(const struct config_context *ctx,
 			      void *data UNUSED)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	return userdiff_config(var, value);
 }
 

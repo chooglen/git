@@ -961,9 +961,11 @@ static struct child_process *git_tcp_connect(int fd[2], char *host, int flags)
 
 static char *git_proxy_command;
 
-static int git_proxy_command_options(const char *var, const char *value,
-		void *cb)
+static int git_proxy_command_options(const struct config_context *ctx,
+				     void *cb)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	if (!strcmp(var, "core.gitproxy")) {
 		const char *for_pos;
 		int matchlen = -1;
@@ -1008,7 +1010,7 @@ static int git_proxy_command_options(const char *var, const char *value,
 		return 0;
 	}
 
-	return git_default_config(var, value, cb);
+	return git_default_config(ctx, cb);
 }
 
 static int git_use_proxy(const char *host)

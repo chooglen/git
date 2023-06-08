@@ -45,9 +45,11 @@ int credential_match(const struct credential *want,
 static int credential_from_potentially_partial_url(struct credential *c,
 						   const char *url);
 
-static int credential_config_callback(const char *var, const char *value,
+static int credential_config_callback(const struct config_context *ctx,
 				      void *data)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	struct credential *c = data;
 	const char *key;
 

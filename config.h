@@ -160,7 +160,7 @@ struct config_context {
  */
 typedef int (*config_fn_t)(const struct config_context *, void *);
 
-int git_default_config(const char *, const char *, void *);
+int git_default_config(const struct config_context *ctx, void *);
 
 /**
  * Read a specific file in git-config format.

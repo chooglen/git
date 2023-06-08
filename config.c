@@ -201,7 +201,7 @@ struct config_include_data {
 };
 #define CONFIG_INCLUDE_INIT { 0 }
 
-static int git_config_include(const char *var, const char *value, void *data);
+static int git_config_include(const struct config_context *ctx, void *data);
 
 #define MAX_INCLUDE_DEPTH 10
 static const char include_depth_advice[] = N_(
@@ -380,8 +380,10 @@ static int include_by_branch(const char *cond, size_t cond_len)
 	return ret;
 }
 
-static int add_remote_url(const char *var, const char *value, void *data)
+static int add_remote_url(const struct config_context *ctx, void *data)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	struct string_list *remote_urls = data;
 	const char *remote_name;
 	size_t remote_name_len;
@@ -413,9 +415,11 @@ static void populate_remote_urls(struct config_include_data *inc)
 	config_reader_set_scope(inc->config_reader, store_scope);
 }
 
-static int forbid_remote_url(const char *var, const char *value UNUSED,
+static int forbid_remote_url(const struct config_context *ctx,
 			     void *data UNUSED)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	const char *remote_name;
 	size_t remote_name_len;
 	const char *key;
@@ -477,8 +481,10 @@ static int include_condition_is_true(struct config_source *cs,
 	return 0;
 }
 
-static int git_config_include(const char *var, const char *value, void *data)
+static int git_config_include(const struct config_context *ctx, void *data)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	struct config_include_data *inc = data;
 	struct config_source *cs = inc->config_reader->source;
 	const char *cond, *key;
@@ -1561,8 +1567,10 @@ int git_config_color(char *dest, const char *var, const char *value)
 	return 0;
 }
 
-static int git_default_core_config(const char *var, const char *value, void *cb)
+static int git_default_core_config(const struct config_context *ctx, void *cb)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	/* This needs a better name */
 	if (!strcmp(var, "core.filemode")) {
 		trust_executable_bit = git_config_bool(var, value);
@@ -1846,7 +1854,7 @@ static int git_default_core_config(const char *var, const char *value, void *cb)
 	}
 
 	/* Add other config variables here and to Documentation/config.txt. */
-	return platform_core_config(var, value, cb);
+	return platform_core_config(ctx, cb);
 }
 
 static int git_default_sparse_config(const char *var, const char *value)
@@ -1948,15 +1956,17 @@ static int git_default_mailmap_config(const char *var, const char *value)
 	return 0;
 }
 
-int git_default_config(const char *var, const char *value, void *cb)
+int git_default_config(const struct config_context *ctx, void *cb)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	if (starts_with(var, "core."))
-		return git_default_core_config(var, value, cb);
+		return git_default_core_config(ctx, cb);
 
 	if (starts_with(var, "user.") ||
 	    starts_with(var, "author.") ||
 	    starts_with(var, "committer."))
-		return git_ident_config(var, value, cb);
+		return git_ident_config(ctx, cb);
 
 	if (starts_with(var, "i18n."))
 		return git_default_i18n_config(var, value);
@@ -2492,8 +2502,10 @@ struct configset_add_data {
 };
 #define CONFIGSET_ADD_INIT { 0 }
 
-static int config_set_callback(const char *key, const char *value, void *cb)
+static int config_set_callback(const struct config_context *ctx, void *cb)
 {
+	const char *key = ctx->key;
+	const char *value = ctx->value;
 	struct configset_add_data *data = cb;
 	configset_add_value(data->config_reader, data->config_set, key, value);
 	return 0;
@@ -3102,8 +3114,10 @@ static int store_aux_event(enum config_event_t type,
 	return 0;
 }
 
-static int store_aux(const char *key, const char *value, void *cb)
+static int store_aux(const struct config_context *ctx, void *cb)
 {
+	const char *key = ctx->key;
+	const char *value = ctx->value;
 	struct config_store_data *store = cb;
 
 	if (store->key_seen) {

@@ -99,8 +99,10 @@ struct tr2_cfg_data {
 /*
  * See if the given config key matches any of our patterns of interest.
  */
-static int tr2_cfg_cb(const char *key, const char *value, void *d)
+static int tr2_cfg_cb(const struct config_context *ctx, void *d)
 {
+	const char *key = ctx->key;
+	const char *value = ctx->value;
 	struct strbuf **s;
 	struct tr2_cfg_data *data = (struct tr2_cfg_data *)d;
 

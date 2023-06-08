@@ -1322,8 +1322,10 @@ static int split_msg(struct strbuf *all_msgs, struct strbuf *msg, int *ofs)
 	return 1;
 }
 
-static int git_imap_config(const char *var, const char *val, void *cb)
+static int git_imap_config(const struct config_context *ctx, void *cb)
 {
+	const char *var = ctx->key;
+	const char *val = ctx->value;
 
 	if (!strcmp("imap.sslverify", var))
 		server.ssl_verify = git_config_bool(var, val);
@@ -1356,7 +1358,7 @@ static int git_imap_config(const char *var, const char *val, void *cb)
 			server.host = xstrdup(val);
 		}
 	} else
-		return git_default_config(var, val, cb);
+		return git_default_config(ctx, cb);
 
 	return 0;
 }

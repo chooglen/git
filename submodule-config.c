@@ -424,8 +424,10 @@ struct parse_config_parameter {
  * config store (.git/config, etc).  Callers are responsible for
  * checking for overrides in the main config store when appropriate.
  */
-static int parse_config(const char *var, const char *value, void *data)
+static int parse_config(const struct config_context *ctx, void *data)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	struct parse_config_parameter *me = data;
 	struct submodule *submodule;
 	struct strbuf name = STRBUF_INIT, item = STRBUF_INIT;
@@ -673,8 +675,10 @@ out:
 	}
 }
 
-static int gitmodules_cb(const char *var, const char *value, void *data)
+static int gitmodules_cb(const struct config_context *ctx, void *data)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	struct repository *repo = data;
 	struct parse_config_parameter parameter;
 
@@ -800,8 +804,11 @@ void submodule_free(struct repository *r)
 		submodule_cache_clear(r->submodule_cache);
 }
 
-static int config_print_callback(const char *var, const char *value, void *cb_data)
+static int config_print_callback(const struct config_context *ctx,
+				 void *cb_data)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	char *wanted_key = cb_data;
 
 	if (!strcmp(wanted_key, var))
@@ -842,8 +849,10 @@ struct fetch_config {
 	int *recurse_submodules;
 };
 
-static int gitmodules_fetch_config(const char *var, const char *value, void *cb)
+static int gitmodules_fetch_config(const struct config_context *ctx, void *cb)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	struct fetch_config *config = cb;
 	if (!strcmp(var, "submodule.fetchjobs")) {
 		if (config->max_children)
@@ -869,9 +878,11 @@ void fetch_config_from_gitmodules(int *max_children, int *recurse_submodules)
 	config_from_gitmodules(gitmodules_fetch_config, the_repository, &config);
 }
 
-static int gitmodules_update_clone_config(const char *var, const char *value,
+static int gitmodules_update_clone_config(const struct config_context *ctx,
 					  void *cb)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	int *max_jobs = cb;
 	if (!strcmp(var, "submodule.fetchjobs"))
 		*max_jobs = parse_submodule_fetchjobs(var, value);

@@ -38,9 +38,11 @@ static void wait_for_pager_signal(int signo)
 	raise(signo);
 }
 
-static int core_pager_config(const char *var, const char *value,
+static int core_pager_config(const struct config_context *ctx,
 			     void *data UNUSED)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	if (!strcmp(var, "core.pager"))
 		return git_config_string(&pager_program, var, value);
 	return 0;
@@ -224,8 +226,10 @@ struct pager_command_config_data {
 	char *value;
 };
 
-static int pager_command_config(const char *var, const char *value, void *vdata)
+static int pager_command_config(const struct config_context *ctx, void *vdata)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	struct pager_command_config_data *data = vdata;
 	const char *cmd;
 

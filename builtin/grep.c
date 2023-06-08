@@ -287,13 +287,15 @@ static int wait_all(void)
 	return hit;
 }
 
-static int grep_cmd_config(const char *var, const char *value, void *cb)
+static int grep_cmd_config(const struct config_context *ctx, void *cb)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	int st = grep_config(var, value, cb);
 
 	if (git_color_config(var, value, cb) < 0)
 		st = -1;
-	else if (git_default_config(var, value, cb) < 0)
+	else if (git_default_config(ctx, cb) < 0)
 		st = -1;
 
 	if (!strcmp(var, "grep.threads")) {

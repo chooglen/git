@@ -1011,8 +1011,11 @@ static int apply_filter(const char *path, const char *src, size_t len,
 	return 0;
 }
 
-static int read_convert_config(const char *var, const char *value, void *cb UNUSED)
+static int read_convert_config(const struct config_context *ctx,
+			       void *cb UNUSED)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	const char *key, *name;
 	size_t namelen;
 	struct convert_driver *drv;

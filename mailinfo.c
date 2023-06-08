@@ -1241,12 +1241,14 @@ int mailinfo_parse_quoted_cr_action(const char *actionstr, int *action)
 	return 0;
 }
 
-static int git_mailinfo_config(const char *var, const char *value, void *mi_)
+static int git_mailinfo_config(const struct config_context *ctx, void *mi_)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	struct mailinfo *mi = mi_;
 
 	if (!starts_with(var, "mailinfo."))
-		return git_default_config(var, value, NULL);
+		return git_default_config(ctx, NULL);
 	if (!strcmp(var, "mailinfo.scissors")) {
 		mi->use_scissors = git_config_bool(var, value);
 		return 0;

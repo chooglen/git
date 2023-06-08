@@ -103,14 +103,16 @@ static int verbose;
 static int guess_remote;
 static timestamp_t expire;
 
-static int git_worktree_config(const char *var, const char *value, void *cb)
+static int git_worktree_config(const struct config_context *ctx, void *cb)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	if (!strcmp(var, "worktree.guessremote")) {
 		guess_remote = git_config_bool(var, value);
 		return 0;
 	}
 
-	return git_default_config(var, value, cb);
+	return git_default_config(ctx, cb);
 }
 
 static int delete_git_dir(const char *id)

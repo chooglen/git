@@ -36,8 +36,10 @@ static int fsmonitor__start_timeout_sec = 60;
 #define FSMONITOR__ANNOUNCE_STARTUP "fsmonitor.announcestartup"
 static int fsmonitor__announce_startup = 0;
 
-static int fsmonitor_config(const char *var, const char *value, void *cb)
+static int fsmonitor_config(const struct config_context *ctx, void *cb)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	if (!strcmp(var, FSMONITOR__IPC_THREADS)) {
 		int i = git_config_int(var, value);
 		if (i < 1)
@@ -66,7 +68,7 @@ static int fsmonitor_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	return git_default_config(var, value, cb);
+	return git_default_config(ctx, cb);
 }
 
 /*

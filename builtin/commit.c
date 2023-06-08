@@ -1402,8 +1402,10 @@ static int parse_status_slot(const char *slot)
 	return LOOKUP_CONFIG(color_status_slots, slot);
 }
 
-static int git_status_config(const char *k, const char *v, void *cb)
+static int git_status_config(const struct config_context *ctx, void *cb)
 {
+	const char *k = ctx->key;
+	const char *v = ctx->value;
 	struct wt_status *s = cb;
 	const char *slot_name;
 
@@ -1487,7 +1489,7 @@ static int git_status_config(const char *k, const char *v, void *cb)
 		s->detect_rename = git_config_rename(k, v);
 		return 0;
 	}
-	return git_diff_ui_config(k, v, NULL);
+	return git_diff_ui_config(ctx, NULL);
 }
 
 int cmd_status(int argc, const char **argv, const char *prefix)
@@ -1602,8 +1604,10 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
-static int git_commit_config(const char *k, const char *v, void *cb)
+static int git_commit_config(const struct config_context *ctx, void *cb)
 {
+	const char *k = ctx->key;
+	const char *v = ctx->value;
 	struct wt_status *s = cb;
 
 	if (!strcmp(k, "commit.template"))
@@ -1624,7 +1628,7 @@ static int git_commit_config(const char *k, const char *v, void *cb)
 		return 0;
 	}
 
-	return git_status_config(k, v, s);
+	return git_status_config(ctx, s);
 }
 
 int cmd_commit(int argc, const char **argv, const char *prefix)

@@ -99,8 +99,11 @@ static void promisor_remote_move_to_tail(struct promisor_remote_config *config,
 	config->promisors_tail = &r->next;
 }
 
-static int promisor_remote_config(const char *var, const char *value, void *data)
+static int promisor_remote_config(const struct config_context *ctx,
+				  void *data)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	struct promisor_remote_config *config = data;
 	const char *name;
 	size_t namelen;

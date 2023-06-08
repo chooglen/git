@@ -410,8 +410,10 @@ static int tar_filter_config(const char *var, const char *value,
 	return 0;
 }
 
-static int git_tar_config(const char *var, const char *value, void *cb)
+static int git_tar_config(const struct config_context *ctx, void *cb)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	if (!strcmp(var, "tar.umask")) {
 		if (value && !strcmp(value, "user")) {
 			tar_umask = umask(0);

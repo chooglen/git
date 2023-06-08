@@ -57,8 +57,10 @@ static struct tr2_sysenv_entry tr2_sysenv_settings[] = {
 };
 /* clang-format on */
 
-static int tr2_sysenv_cb(const char *key, const char *value, void *d)
+static int tr2_sysenv_cb(const struct config_context *ctx, void *d)
 {
+	const char *key = ctx->key;
+	const char *value = ctx->value;
 	int k;
 
 	if (!starts_with(key, "trace2."))

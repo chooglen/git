@@ -593,8 +593,10 @@ static int cmd_register(int argc, const char **argv)
 	return register_dir();
 }
 
-static int get_scalar_repos(const char *key, const char *value, void *data)
+static int get_scalar_repos(const struct config_context *ctx, void *data)
 {
+	const char *key = ctx->key;
+	const char *value = ctx->value;
 	struct string_list *list = data;
 
 	if (!strcmp(key, "scalar.repo"))

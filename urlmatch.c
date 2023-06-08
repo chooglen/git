@@ -551,8 +551,10 @@ static int cmp_matches(const struct urlmatch_item *a,
 	return 0;
 }
 
-int urlmatch_config_entry(const char *var, const char *value, void *cb)
+int urlmatch_config_entry(const struct config_context *ctx, void *cb)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	struct string_list_item *item;
 	struct urlmatch_config *collect = cb;
 	struct urlmatch_item matched = {0};

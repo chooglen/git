@@ -214,8 +214,10 @@ static struct update_ref_record *init_update_ref_record(const char *ref)
 	return rec;
 }
 
-static int git_sequencer_config(const char *k, const char *v, void *cb)
+static int git_sequencer_config(const struct config_context *ctx, void *cb)
 {
+	const char *k = ctx->key;
+	const char *v = ctx->value;
 	struct replay_opts *opts = cb;
 	int status;
 
@@ -269,7 +271,7 @@ static int git_sequencer_config(const char *k, const char *v, void *cb)
 	if (opts->action == REPLAY_REVERT && !strcmp(k, "revert.reference"))
 		opts->commit_use_reference = git_config_bool(k, v);
 
-	return git_diff_basic_config(k, v, NULL);
+	return git_diff_basic_config(ctx, NULL);
 }
 
 void sequencer_init_config(struct replay_opts *opts)
@@ -2876,8 +2878,10 @@ static int git_config_string_dup(char **dest,
 	return 0;
 }
 
-static int populate_opts_cb(const char *key, const char *value, void *data)
+static int populate_opts_cb(const struct config_context *ctx, void *data)
 {
+	const char *key = ctx->key;
+	const char *value = ctx->value;
 	struct replay_opts *opts = data;
 	int error_flag = 1;
 

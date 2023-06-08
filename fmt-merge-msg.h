@@ -13,7 +13,7 @@ struct fmt_merge_msg_opts {
 };
 
 extern int merge_log_config;
-int fmt_merge_msg_config(const char *key, const char *value, void *cb);
+int fmt_merge_msg_config(const struct config_context *ctx, void *cb);
 int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 		  struct fmt_merge_msg_opts *);
 

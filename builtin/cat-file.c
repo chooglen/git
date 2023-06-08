@@ -882,12 +882,14 @@ static int batch_objects(struct batch_options *opt)
 	return retval;
 }
 
-static int git_cat_file_config(const char *var, const char *value, void *cb)
+static int git_cat_file_config(const struct config_context *ctx, void *cb)
 {
+	const char *var = ctx->key;
+	const char *value = ctx->value;
 	if (userdiff_config(var, value) < 0)
 		return -1;
 
-	return git_default_config(var, value, cb);
+	return git_default_config(ctx, cb);
 }
 
 static int batch_option_callback(const struct option *opt,
