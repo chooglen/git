@@ -1651,8 +1651,8 @@ void check_repository_format(struct repository_format *fmt)
 	check_repository_format_gently(get_git_dir(), fmt, NULL);
 	startup_info->have_repository = 1;
 	repo_set_hash_algo(the_repository, fmt->hash_algo);
-	the_repository->repository_format_partial_clone =
-		xstrdup_or_null(fmt->partial_clone);
+	the_repository->repository_format_partial_clone = fmt->partial_clone;
+	fmt->partial_clone = NULL;
 	clear_repository_format(&repo_fmt);
 }
 
