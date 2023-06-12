@@ -181,12 +181,7 @@ int repo_init(struct repository *repo,
 	if (read_and_verify_repository_format(&format, repo->commondir))
 		goto error;
 
-	repo_set_hash_algo(repo, format.hash_algo);
-	repo->repository_format_worktree_config = format.worktree_config;
-
-	/* take ownership of format.partial_clone */
-	repo->repository_format_partial_clone = format.partial_clone;
-	format.partial_clone = NULL;
+	setup_repository_from_format(repo, &format, 1);
 
 	if (worktree)
 		repo_set_worktree(repo, worktree);
