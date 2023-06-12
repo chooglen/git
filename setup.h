@@ -141,6 +141,16 @@ int verify_repository_format(const struct repository_format *format,
 void check_repository_format(struct repository_format *fmt);
 
 /*
+ * Setup a "struct repository" from the fields from the repository format.
+ * If "modify_fmt_ok" is nonzero, pointer members in "fmt" will be shallowly
+ * copied to repo and set to NULL (so that it's safe to clear "fmt").
+ */
+struct repository;
+void setup_repository_from_format(struct repository *repo,
+				  struct repository_format *fmt,
+				  int modify_fmt_ok);
+
+/*
  * NOTE NOTE NOTE!!
  *
  * PERM_UMASK, OLD_PERM_GROUP and OLD_PERM_EVERYBODY enumerations must

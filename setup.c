@@ -1561,13 +1561,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			setup_git_env(gitdir);
 		}
 		if (startup_info->have_repository) {
-			repo_set_hash_algo(the_repository, repo_fmt.hash_algo);
-			the_repository->repository_format_worktree_config =
-				repo_fmt.worktree_config;
-			/* take ownership of repo_fmt.partial_clone */
-			the_repository->repository_format_partial_clone =
-				repo_fmt.partial_clone;
-			repo_fmt.partial_clone = NULL;
+			setup_repository_from_format(the_repository,
+						     &repo_fmt, 1);
 		}
 	}
 	/*
@@ -1654,12 +1649,24 @@ void check_repository_format(struct repository_format *fmt)
 		fmt = &repo_fmt;
 	check_repository_format_gently(get_git_dir(), fmt, NULL);
 	startup_info->have_repository = 1;
-	repo_set_hash_algo(the_repository, fmt->hash_algo);
-	the_repository->repository_format_worktree_config =
-		fmt->worktree_config;
-	the_repository->repository_format_partial_clone =
-		xstrdup_or_null(fmt->partial_clone);
+	setup_repository_from_format(the_repository, fmt, 0);
 	clear_repository_format(&repo_fmt);
+}
+
+void setup_repository_from_format(struct repository *repo,
+				  struct repository_format *fmt,
+				  int modify_fmt_ok)
+{
+	repo_set_hash_algo(repo, fmt->hash_algo);
+	repo->repository_format_worktree_config = fmt->worktree_config;
+	if (modify_fmt_ok) {
+		repo->repository_format_partial_clone =
+			fmt->partial_clone;
+		fmt->partial_clone = NULL;
+	} else {
+		repo->repository_format_partial_clone =
+			xstrdup_or_null(fmt->partial_clone);
+	}
 }
 
 /*
