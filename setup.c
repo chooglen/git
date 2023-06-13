@@ -1651,14 +1651,9 @@ void setup_repository_from_format(struct repository *repo,
 {
 	repo_set_hash_algo(repo, fmt->hash_algo);
 	repo->repository_format_worktree_config = fmt->worktree_config;
-	if (modify_fmt_ok) {
 		repo->repository_format_partial_clone =
 			fmt->partial_clone;
 		fmt->partial_clone = NULL;
-	} else {
-		repo->repository_format_partial_clone =
-			xstrdup_or_null(fmt->partial_clone);
-	}
 }
 
 /*
