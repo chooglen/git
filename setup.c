@@ -1641,7 +1641,6 @@ void check_repository_format(struct repository_format *fmt)
 		fmt = &repo_fmt;
 	check_repository_format_gently(get_git_dir(), fmt, NULL);
 	startup_info->have_repository = 1;
-	setup_repository_from_format(the_repository, fmt, 0);
 	clear_repository_format(&repo_fmt);
 }
 
