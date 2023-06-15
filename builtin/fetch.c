@@ -100,7 +100,8 @@ static int fetch_write_commit_graph = -1;
 static int stdin_refspecs = 0;
 static int negotiate_only;
 
-static int git_fetch_config(const char *k, const char *v, void *cb)
+static int git_fetch_config(const char *k, const char *v,
+			    const struct config_context *ctx, void *cb)
 {
 	if (!strcmp(k, "fetch.prune")) {
 		fetch_prune_config = git_config_bool(k, v);
@@ -140,7 +141,7 @@ static int git_fetch_config(const char *k, const char *v, void *cb)
 		return 0;
 	}
 
-	return git_default_config(k, v, cb);
+	return git_default_config(k, v, ctx, cb);
 }
 
 static int parse_refmap_arg(const struct option *opt, const char *arg, int unset)
@@ -1828,7 +1829,9 @@ struct remote_group_data {
 	struct string_list *list;
 };
 
-static int get_remote_group(const char *key, const char *value, void *priv)
+static int get_remote_group(const char *key, const char *value,
+			    const struct config_context *ctx UNUSED,
+			    void *priv)
 {
 	struct remote_group_data *g = priv;
 
